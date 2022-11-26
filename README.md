@@ -4,7 +4,7 @@
 
 ### Creation
 
-1. On github.com navigate to the main page of this repository
+1. On navigate to the main page of [this repository](https://github.com/Flashky/advent-of-code-yyyy).
 2. Click on **Use this template**.
 3. Select **Create a new repository**.
 4. Type the name of the new repository. Example: ``advent-of-code-2022``.
@@ -12,11 +12,13 @@
 ### Setup
 
 1. Clone the new repository.
-2. Modify README.md: substitute all {year} occurences with year in format ``yyyy``.
-3. Modify pom.xml: substitute ``yyyy`` occurences with year in format ``yyyy``.
+2. Modify ``README.md``: substitute all ``{year}`` occurences with year in format ``yyyy``.
+3. Modify ``pom.xml``: substitute ``yyyy`` occurences with year in format ``yyyy``.
 4. Setup ``CODACY_PROJECT_KEY`` for code quality analysis.
-5. Remove these instructions from README.md
-6. Enjoy your new Advent of Code edition!
+5. Remove these instructions from ``README.md``
+6. **Enjoy your new Advent of Code edition!**
+
+---
 
 - [Day 1](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day01)
 - [Day 2](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day02)
