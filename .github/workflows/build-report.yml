@@ -40,6 +40,7 @@ jobs:
         restore-keys: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
     - name: Set up JDK 11
       uses: actions/setup-java@v2
+      distribution: temurin
       with:
         java-version: 1.11
     - name: Build with Maven
