@@ -7,7 +7,8 @@ import lombok.Getter;
 @Getter
 public class Collider2D {
 
-	// Reference for ideas: https://stackoverflow.com/questions/907390/how-can-i-tell-if-a-point-belongs-to-a-certain-line
+	// Reference for ideas: 
+	// https://stackoverflow.com/questions/907390/how-can-i-tell-if-a-point-belongs-to-a-certain-line
 
 	private Vector2 start;
 	private Vector2 end;
@@ -71,7 +72,10 @@ public class Collider2D {
 	}
 
 	public boolean collidesWith(Collider2D other) {
-		 return this.minX <= other.maxX && this.maxX >= other.minX && this.minY <= other.maxY && this.maxY >= other.minY;
+		 return this.minX <= other.maxX && 
+				 this.maxX >= other.minX && 
+				 this.minY <= other.maxY && 
+				 this.maxY >= other.minY;
 	}
 
 	private void calculateMinAndMax(Vector2 start, Vector2 end) {
