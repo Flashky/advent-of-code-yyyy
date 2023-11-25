@@ -1,7 +1,5 @@
 package com.adventofcode.flashk.common;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,8 +28,6 @@ public final class JsonUtil {
 			ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.readTree(input);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		

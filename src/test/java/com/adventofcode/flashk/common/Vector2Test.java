@@ -496,7 +496,7 @@ class Vector2Test {
 		
 		Vector2 vector = new Vector2(0,0);
 		
-		assertThrows(IllegalStateException.class, () -> vector.normalize());
+		assertThrows(IllegalStateException.class, vector::normalize);
 	
 	}
 	
@@ -620,7 +620,7 @@ class Vector2Test {
 		
 		Vector2 vector = new Vector2(0,0);
 		
-		assertThrows(IllegalStateException.class, () -> vector.normalized());
+		assertThrows(IllegalStateException.class, vector::normalized);
 	
 	}
 	

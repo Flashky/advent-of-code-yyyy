@@ -23,8 +23,7 @@ public class Vector3 {
 	 * 
 	 * vector.equals(vector2) // true
 	 * </pre>
-	 * @param coordinates
-	 * @return
+	 * @param coordinates the coordinates of the vector
 	 */
 	public Vector3(String coordinates) {
 		

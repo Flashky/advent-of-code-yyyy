@@ -29,8 +29,7 @@ public class Vector2 {
 	 * 
 	 * vector1.equals(vector2) // true
 	 * </pre>
-	 * @param coordinates
-	 * @return
+	 * @param coordinates the coordinates of the vector
 	 */
 	public Vector2(String coordinates) {
 		
@@ -83,7 +82,6 @@ public class Vector2 {
 	 *  
 	 * </p>
 	 * @param other substracting Vector2.
-	 * @return a new Vector2
 	 */
 	public void substractAbs(Vector2 other) {
 		

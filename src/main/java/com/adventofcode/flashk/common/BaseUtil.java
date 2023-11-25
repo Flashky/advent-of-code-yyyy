@@ -29,8 +29,8 @@ public final class BaseUtil {
 	 * <pre>
 	 * 	BaseUtil.hexToBinary("6") = "110"
 	 * </pre>
-	 * @param hex
-	 * @return
+	 * @param hex the hexadecimal code
+	 * @return the translated binary code
 	 * @see #hexToBinaryPadLeft(String)
 	 */
 	public static String hexToBinary(String hex) {
@@ -52,8 +52,8 @@ public final class BaseUtil {
 	 * <pre>
 	 * 	BaseUtil.hexToBinaryPadLeft("6") = "0110"
 	 * </pre>
-	 * @param hex
-	 * @return
+	 * @param hex the hexadecimal code
+	 * @return the translated binary code
 	 * @see #hexToBinary(String)
 	 */
 	public static String hexToBinaryPadLeft(String hex) {
