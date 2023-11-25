@@ -41,7 +41,8 @@ public class Collider2D {
 			return true;
 		}
 		
-		// Reference for ideas: https://stackoverflow.com/questions/907390/how-can-i-tell-if-a-point-belongs-to-a-certain-line
+		// Reference for ideas: 
+		// https://stackoverflow.com/questions/907390/how-can-i-tell-if-a-point-belongs-to-a-certain-line
 		
 		// check from line segment start perspective
 		double reference = Math.atan2(start.getY() - end.getY(), start.getX() - end.getX());
