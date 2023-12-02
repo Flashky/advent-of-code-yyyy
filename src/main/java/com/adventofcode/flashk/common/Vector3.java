@@ -86,9 +86,9 @@ public class Vector3 {
 		return new Vector3(0,-1,0);
 	}
 
-    /**
-     * Shorthand for <code>Vector3(0,0,1)</code>.
-	 * @return A unitary vector that points forward;
+	/**
+	 * Shorthand for <code>Vector3(0,0,1)</code>.
+	 * @return A unitary vector that points forward.
 	 */
 	public static Vector3 forward() {
 		return new Vector3(0,0,1);
