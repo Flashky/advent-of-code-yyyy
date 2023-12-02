@@ -131,6 +131,81 @@ class Vector2Test {
 	// Transform tests
 
 	@Test
+	void testDistance() {
+		Vector2 v1 = new Vector2(2,3);
+		Vector2 v2 = new Vector2(3,5);
+
+		double value = Vector2.distance(v1, v2);
+
+		assertEquals(2.23606797749979, value);
+	}
+
+	@Test
+	void testManhattanDistance() {
+		Vector2 v1 = new Vector2(2, 3);
+		Vector2 v2 = new Vector2(3, 5);
+
+		int value = Vector2.manhattanDistance(v1, v2);
+
+		assertEquals(3, value);
+	}
+
+	@Test
+	void testManhattanDistanceNegativeToPositive() {
+		Vector2 v1 = new Vector2(-1, -1);
+		Vector2 v2 = new Vector2(1, 1);
+
+		int value = Vector2.manhattanDistance(v1, v2);
+
+		assertEquals(4, value);
+	}
+
+	@Test
+	void testManhattanDistancePositiveToNegative() {
+		Vector2 v1 = new Vector2(1, 1);
+		Vector2 v2 = new Vector2(-1, -1);
+
+		int value = Vector2.manhattanDistance(v1, v2);
+
+		assertEquals(4, value);
+	}
+
+	@Test
+	void testTransformScalar() {
+		Vector2 startPos = new Vector2(2,5);
+		startPos.transform(3);
+
+		assertEquals(5, startPos.getX());
+		assertEquals(8, startPos.getY());
+	}
+
+	@Test
+	void testTransformX() {
+		Vector2 startPos = new Vector2(2, 5);
+		startPos.transformX(3);
+
+		assertEquals(5, startPos.getX());
+	}
+
+	@Test
+	void testTransformY() {
+		Vector2 startPos = new Vector2(2, 5);
+		startPos.transformY(3);
+
+		assertEquals(8, startPos.getY());
+	}
+
+	@Test
+	void testTransformStatic() {
+		Vector2 startPos = new Vector2(2,5);
+		Vector2 endPos = new Vector2(3,7);
+		Vector2 result = Vector2.transform(startPos, endPos);
+
+		assertEquals(5, result.getX());
+		assertEquals(12, result.getY());
+	}
+
+	@Test
 	void testTransform() {
 
 		Vector2 startPos = new Vector2(2,5);
@@ -242,6 +317,24 @@ class Vector2Test {
 		assertNotNull(leftOperand);
 		assertEquals(6, leftOperand.getX());
 		assertEquals(0, leftOperand.getY());
+	}
+
+	@Test
+	void testSubstractStatic() {
+		Vector2 leftOperand = new Vector2(5,0);
+		Vector2 rightOperand = new Vector2(11,0);
+
+		Vector2 result = Vector2.substract(leftOperand, rightOperand);
+
+		assertNotNull(result);
+		assertEquals(-6, result.getX());
+		assertEquals(0, result.getY());
+
+		// left and right operands are not modified
+		assertEquals(5, leftOperand.getX());
+		assertEquals(0, leftOperand.getY());
+		assertEquals(11, rightOperand.getX());
+		assertEquals(0, rightOperand.getY());
 	}
 
 	@Test
@@ -496,7 +589,7 @@ class Vector2Test {
 
 		Vector2 vector = new Vector2(0,0);
 
-		assertThrows(IllegalStateException.class, () -> vector.normalize());
+		assertThrows(IllegalStateException.class, vector::normalize);
 
 	}
 
@@ -620,7 +713,7 @@ class Vector2Test {
 
 		Vector2 vector = new Vector2(0,0);
 
-		assertThrows(IllegalStateException.class, () -> vector.normalized());
+		assertThrows(IllegalStateException.class, vector::normalized);
 
 	}
 }
