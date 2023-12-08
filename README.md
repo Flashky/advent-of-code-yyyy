@@ -23,6 +23,26 @@
 4. Modify ``README.md``: replace all ``{year}`` occurrences with year in format ``yyyy``.
 5. Modify ``pom.xml``: replace all ``yyyy`` occurrences with year in format ``yyyy``.
 
+### Data Repository Setup
+
+This new repository is meant to use a [submodule](https://github.blog/2016-02-01-working-with-submodules/) repository for holding the input files:
+1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
+2. Clone this solutions repository.
+3. Open ``src/test/resources`` folder.
+4. Execute: ``git submodule add <URL to data repo> data``
+
+### Data Repository Token Setup
+
+In order to this repository GitHub Actions to be able to checkout the data repository, a **Personal Access Token** is needed:
+1. Open **Account / Settings / Developer Settings**.
+2. Click on **Generate New Token**.
+3. Select ``repo`` checkbox.
+4. Copy the token.
+5. Go to the created [GitHub solutions repository](https://github.com/Flashky/advent-of-code-{year}).
+6. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
+   1. **Name:** ``PAT_TOKEN``
+   2. **Secret:** The previously copied token.
+
 ### Codacy Project Token Setup
 
 1. Go to [Codacy](https://app.codacy.com) and add the repository.
@@ -72,6 +92,20 @@
 - [Day 23](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day23)
 - [Day 24](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day24)
 - [Day 25](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day25)
+
+## Cloning this repository
+
+Without data repository:
+
+```bash
+git clone https://github.com/Flashky/advent-of-code-{yyyy}.git
+```
+
+Including data repository:
+
+```
+git clone https://github.com/Flashky/advent-of-code-{yyyy}.git --recurse-submodules
+```
 
 ## About
 
