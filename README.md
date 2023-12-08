@@ -25,7 +25,7 @@
 
 ### Data Repository Setup
 
-This new repository is meant to use a [submodule](https://github.blog/2016-02-01-working-with-submodules/) repository for holding the input files:
+This new repository is meant to use a [submodule](https://github.blog/2016-02-01-working-with-submodules/) repository for privately storing the input files:
 1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
 2. Clone this solutions repository.
 3. Open ``src/test/resources`` folder.
