@@ -29,7 +29,7 @@ This new repository is meant to use a [submodule](https://github.blog/2016-02-01
 1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
 2. Clone this solutions repository.
 3. Open ``src/test/resources`` folder.
-4. Execute: ``git submodule add https://github.com/Flashky/advent-of-code-${year}-data inputs``
+4. Execute: ``git submodule add https://github.com/Flashky/advent-of-code-{year}-data inputs``
 
 ### Data Repository Token Setup
 
