@@ -21,9 +21,9 @@
     4. ``advent-of-code-yyyy-java``
 3. Clone the new repository.
 4. Open the repository on any IDE.
-5. Replace all ``{year}`` occurrences with year in format ``yyyy``. Affected files should be:
-   1. ``pom.xml``
-   2. ``README.md`` (main and puzzles)
+5. Modify ``pom.xml``: replace all ``yyyy`` occurrences with year in format ``yyyy``.
+6. Replace all ``{year}`` occurrences with year in format ``yyyy``. Affected files should be:
+   1``README.md`` (main and puzzles)
 
 ### Data Repository Setup
 
