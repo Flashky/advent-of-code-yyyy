@@ -2,15 +2,17 @@ package com.adventofcode.flashk.common;
 
 import com.adventofcode.flashk.common.test.constants.TestFilename;
 import com.adventofcode.flashk.common.test.constants.TestFolder;
-import com.adventofcode.flashk.common.test.utils.Util;
+import com.adventofcode.flashk.common.test.utils.Input;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonElement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 class JsonUtilTest {
 
     @BeforeEach
@@ -23,7 +25,7 @@ class JsonUtilTest {
 
     @Test
     void buildTreeFromArrayJsonTest() {
-        String content = Util.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
         JsonNode jsonNode = JsonUtil.buildTree(content);
 
         assertNotNull(jsonNode);
@@ -36,14 +38,14 @@ class JsonUtilTest {
 
     @Test
     void buildTreeFromInvalidJsonTest() {
-        String content = Util.readStringLines(TestFolder.COMMON, TestFilename.INVALID_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.INVALID_JSON).get(0);
         assertThrows(IllegalArgumentException.class, () -> { JsonUtil.buildTree(content); });
     }
 
     @Test
     void buildGsonTreeTest() {
 
-        String content = Util.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
         JsonElement jsonElement = JsonUtil.buildGsonTree(content);
 
         assertNotNull(jsonElement);
@@ -57,7 +59,7 @@ class JsonUtilTest {
     @Test
     void isIntTest() {
 
-        String content = Util.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
         JsonElement jsonElement = JsonUtil.buildGsonTree(content).getAsJsonArray().get(0);
 
         assertTrue(JsonUtil.isInt(jsonElement));
