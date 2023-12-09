@@ -20,16 +20,17 @@
     3. ``advent-of-code-yyyy``
     4. ``advent-of-code-yyyy-java``
 3. Clone the new repository.
-4. Modify ``README.md``: replace all ``{year}`` occurrences with year in format ``yyyy``.
-5. Modify ``pom.xml``: replace all ``yyyy`` occurrences with year in format ``yyyy``.
+4. Open the repository on any IDE.
+5. Replace all ``{year}`` occurrences with year in format ``yyyy``. Affected files should be:
+   1. ``pom.xml``
+   2. ``README.md`` (main and puzzles)
 
 ### Data Repository Setup
 
 This new repository is meant to use a [submodule](https://github.blog/2016-02-01-working-with-submodules/) repository for privately storing the input files:
 1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
-2. Clone this solutions repository.
-3. Open ``src/test/resources`` folder.
-4. Execute: ``git submodule add https://github.com/Flashky/advent-of-code-{year}-data inputs``
+2. Open the solutions repository at ``src/test/resources`` folder.
+3. Execute: ``git submodule add https://github.com/Flashky/advent-of-code-{year}-data inputs``
 
 ### Data Repository Token Setup
 
@@ -103,7 +104,7 @@ git clone https://github.com/Flashky/advent-of-code-{yyyy}.git
 
 Including data repository:
 
-```
+```bash
 git clone https://github.com/Flashky/advent-of-code-{yyyy}.git --recurse-submodules
 ```
 
