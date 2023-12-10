@@ -31,7 +31,7 @@ This new repository is meant to use a [submodule](https://github.blog/2016-02-01
 1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
 2. Open the solutions repository and execute:
 
-```bah
+```bash
 git submodule add -b master https://github.com/Flashky/advent-of-code-{yyyy}-data.git src/test/resources/inputs
 ```
 
