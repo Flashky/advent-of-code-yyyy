@@ -29,8 +29,11 @@
 
 This new repository is meant to use a [submodule](https://github.blog/2016-02-01-working-with-submodules/) repository for privately storing the input files:
 1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
-2. Open the solutions repository.
-3. Execute: ``git submodule add -b master https://github.com/Flashky/advent-of-code-{yyyy}-data.git src/test/resources/inputs``
+2. Open the solutions repository and execute:
+
+```bah
+git submodule add -b master https://github.com/Flashky/advent-of-code-{yyyy}-data.git src/test/resources/inputs
+```
 
 ### Data Repository Token Setup
 
