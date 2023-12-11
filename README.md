@@ -102,13 +102,13 @@ In order to this repository GitHub Actions to be able to checkout the data repos
 Without data repository:
 
 ```bash
-git clone https://github.com/Flashky/advent-of-code-{yyyy}.git
+git clone https://github.com/Flashky/advent-of-code-{year}.git
 ```
 
 Including data repository:
 
 ```bash
-git clone https://github.com/Flashky/advent-of-code-{yyyy}.git --recurse-submodules
+git clone https://github.com/Flashky/advent-of-code-{year}.git --recurse-submodules
 ```
 
 ## About
