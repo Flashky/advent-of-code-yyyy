@@ -22,8 +22,7 @@
 3. Clone the new repository.
 4. Open the repository on any IDE.
 5. Modify ``pom.xml``: replace all ``yyyy`` occurrences with year in format ``yyyy``.
-6. Replace all ``{year}`` occurrences with year in format ``yyyy``. Affected files should be:
-   1``README.md`` (main and puzzles)
+6. Replace all ``{year}`` occurrences with year in format ``yyyy``. Affected files should be all the ``README.md`` (main and puzzles).
 
 ### Data Repository Setup
 
