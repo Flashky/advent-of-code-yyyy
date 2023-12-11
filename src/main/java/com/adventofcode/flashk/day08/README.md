@@ -1,3 +1,3 @@
 # Day 8: 
 
-[https://adventofcode.com/{yyyy}/day/8](https://adventofcode.com/{yyyy}/day/8)
+[https://adventofcode.com/{year}/day/8](https://adventofcode.com/{year}/day/8)

@@ -31,7 +31,7 @@ This new repository is meant to use a [submodule](https://github.blog/2016-02-01
 2. Open the solutions repository and execute:
 
 ```bash
-git submodule add -b master https://github.com/Flashky/advent-of-code-{yyyy}-data.git src/test/resources/inputs
+git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs
 ```
 
 ### Data Repository Token Setup
