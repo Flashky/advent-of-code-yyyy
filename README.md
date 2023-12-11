@@ -13,16 +13,31 @@
 
 ### Repository Setup
 
-1. Open the created repository.
-2. Click on settings next to **About** and add the following tags (using the corresponding year):
+#### Update year placeholders
+
+1. Clone the created repository.
+2. Update all ``README.md`` placeholders of ``{year}`` with the AoC year's edition value:
+
+```bash
+find . -name 'README.md' | xargs sed -i 's/{year}/THE_YEAR/g'
+```
+
+3. Update ``pom.xml`` placeholder of ``yyyy`` with the AoC year's edition value:
+
+```bash
+find . -name 'pom.xml' | xargs sed -i 's/yyyy/THE_YEAR/g'
+```
+
+Alternatively, you can also do it with any IDE or text editor.
+
+#### Update repository information
+
+1. Open the [GitHub repository](https://github.com/Flashky/advent-of-code-{year}).
+2. Click on settings next to **About** and add the following tags:
     1. ``java``
     2. ``advent-of-code``
-    3. ``advent-of-code-yyyy``
-    4. ``advent-of-code-yyyy-java``
-3. Clone the new repository.
-4. Open the repository on any IDE.
-5. Modify ``pom.xml``: replace all ``yyyy`` occurrences with year in format ``yyyy``.
-6. Replace all ``{year}`` occurrences with year in format ``yyyy``. Affected files should be all the ``README.md`` (main and puzzles).
+    3. ``advent-of-code-{year}``
+    4. ``advent-of-code-{year}-java``
 
 ### Data Repository Setup
 
