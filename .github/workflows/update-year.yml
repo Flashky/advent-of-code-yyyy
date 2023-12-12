@@ -7,23 +7,26 @@ on:
         required: true
         default: 'yyyy'
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Check Repository
+        run: |
+          if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
+            echo "Error: This workflow cannot be run from the template repository."
+            exit 1
+          fi
+      - name: Check Year Format
+        run: |
+          if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
+            echo "Year '${{ github.event.inputs.aoc_year }}' format is valid."
+          else
+            echo "Error: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year."
+            exit 1
+          fi
   update-year:
     runs-on: ubuntu-latest
     steps:
-    - name: Check Repository
-      run: |
-        if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
-          echo "Error: This workflow cannot be run from the template repository."
-          exit 1
-        fi
-    - name: Check Year Format
-      run: |
-        if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
-          echo "Year '${{ github.event.inputs.aoc_year }}' format is valid."
-        else
-          echo "Error: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year."
-          exit 1
-        fi
     - uses: actions/checkout@v3
     - name: Update README.md
       run: |
