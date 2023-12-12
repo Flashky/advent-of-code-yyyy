@@ -6,3 +6,10 @@ on:
         description: 'Advent of Code year'
         required: true
         default: 'yyyy'
+jobs:
+  update-year:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Update Advent of Code year
+      run: |
+        echo "Year: ${{ github.event.inputs.aoc_year }}"
