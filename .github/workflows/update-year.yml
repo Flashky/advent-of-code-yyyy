@@ -1,1 +1,7 @@
-
+name: Update year
+  workflow_dispatch:
+    inputs:
+      aoc_year:
+        description: 'Advent of Code year'
+        required: true
+        default: 'yyyy'
