@@ -10,12 +10,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps: 
-      - name: Check Repository
-        run: |
-          if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
-            echo "Error: This workflow cannot be run from the template repository."
-            exit 1
-          fi
+      #- name: Check Repository
+       # run: |
+     #     if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
+          #  echo "Error: This workflow cannot be run from the template repository."
+     #       exit 1
+    #      fi
       - name: Check Year Format
         run: |
           if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
