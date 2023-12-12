@@ -12,8 +12,9 @@ jobs:
     steps:
     - name: Check Year Format
       run: |
-        echo "year = ${{ github.event.inputs.aoc_year }}"
-        if [[ ! ${{ github.event.inputs.aoc_year =~ ^[0-9]{4}$ }} ]]; then
+        if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
+          echo "Year '${{ github.event.inputs.aoc_year }}' format is valid."
+        else
           echo "Error: Invalid year format. Please provide a valid 4-digit year."
           exit 1
         fi
