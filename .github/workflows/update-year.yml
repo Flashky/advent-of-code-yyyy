@@ -16,7 +16,7 @@ jobs:
         echo "year = ${{ github.event.inputs.aoc_year }}" +
     - name: Update README.md
       run: |
-        find . -name 'README.md' | xargs sed -i "s/{year}/${{ github.event.inputs.aoc_year }}/g"
+        find . -name 'README.md' | xargs sed -i 's/{year}/'${{ github.event.inputs.aoc_year }}'/g'
     - name: Update pom.xml
       run: |
         find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
