@@ -20,6 +20,13 @@ jobs:
         run: |
           if [ -z "${{ secrets.GH_TOKEN }}" ]; then
             echo "Error: GH_TOKEN secret is not set."
+            echo "To generate a personal access token (PAT) for GitHub Actions:"
+            echo "1. Go to https://github.com/settings/tokens"
+            echo "2. Click 'Generate token'"
+            echo "3. Give your token a name, select the required scopes (e.g., repo), and click 'Generate token'"
+            echo "4. Copy the generated token"
+            echo "5. Go to your repository on GitHub -> Settings -> Secrets -> New repository secret"
+            echo "6. Name the secret 'GH_TOKEN' and paste the copied token as the value"
             exit 1
           fi
       - name: Check Year Format
