@@ -18,7 +18,7 @@ jobs:
     #      fi
       - name: Check for Token Secret
         run: |
-          if [ -z "${{ secrets.PAT_TOKENa }}" ]; then
+          if [ -z "${{ secrets.PAT_TOKEN }}" ]; then
             echo -e "\e[91mError: PAT_TOKEN secret is not set.\e[0m"
             echo -e "\e[93mTo generate a personal access token (PAT) for GitHub Actions:\e[0m"
             echo -e "\e[93m1. Go to \e[94mhttps://github.com/settings/tokens\e[0m"
