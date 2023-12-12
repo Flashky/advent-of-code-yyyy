@@ -34,7 +34,7 @@ jobs:
           if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
             echo "Year '${{ github.event.inputs.aoc_year }}' format is valid."
           else
-            echo -e "\e[91Error: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year.\e[0m"
+            echo -e "\e[91mError: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year.\e[0m"
             exit 1
           fi
   update-year:
