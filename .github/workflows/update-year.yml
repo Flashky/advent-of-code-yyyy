@@ -22,5 +22,5 @@ jobs:
         find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
     - name: Check changes
       run: |
-        git status
+        cat "src/main/java/com/adventofcode/flashk/day01/README.md"
         
