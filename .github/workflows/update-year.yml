@@ -1,4 +1,5 @@
 name: Update year
+on:
   workflow_dispatch:
     inputs:
       aoc_year:
