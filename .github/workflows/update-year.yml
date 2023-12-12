@@ -13,20 +13,20 @@ jobs:
       #- name: Check Repository
        # run: |
      #     if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
-          #  echo "Error: This workflow cannot be run from the template repository."
+          #  echo -e "\e[91Error: This workflow cannot be run from the template repository.\e[0m"
      #       exit 1
     #      fi
       - name: Check for Token Secret
         run: |
           if [ -z "${{ secrets.PAT_TOKENa }}" ]; then
-            echo -e "\e[91mError: GH_TOKEN secret is not set.\e[0m"
+            echo -e "\e[91mError: PAT_TOKEN secret is not set.\e[0m"
             echo "To generate a personal access token (PAT) for GitHub Actions:"
-            echo "1. Go to https://github.com/settings/tokens"
-            echo "2. Click 'Generate token'"
-            echo "3. Give your token a name, select the required scopes (e.g., repo), and click 'Generate token'"
+            echo "1. Go to \e[94mhttps://github.com/settings/tokens\e[0m"
+            echo "2. Click '\e[92mGenerate token\e[0m'"
+            echo "3. Give your token a name, select the required scopes (e.g., repo), and click '\e[92mGenerate token\e[0m'"
             echo "4. Copy the generated token"
             echo "5. Go to your repository on GitHub -> Settings -> Secrets -> New repository secret"
-            echo "6. Name the secret 'GH_TOKEN' and paste the copied token as the value"
+            echo "6. Name the secret '\e[PAT_TOKEN\e[0m' and paste the copied token as the value"
             exit 1
           fi
       - name: Check Year Format
@@ -34,7 +34,7 @@ jobs:
           if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
             echo "Year '${{ github.event.inputs.aoc_year }}' format is valid."
           else
-            echo "Error: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year."
+            echo -e "\e[91Error: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year.\e[0m"
             exit 1
           fi
   update-year:
