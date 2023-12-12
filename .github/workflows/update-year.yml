@@ -26,7 +26,7 @@ jobs:
             echo -e "\e[93m3. Give your token a name, select the required scopes (e.g., repo), and click on \e[92mGenerate token\e[93m\e[0m"
             echo -e "\e[93m4. Copy the generated token"
             echo -e "\e[93m5. Go to your repository on GitHub -> Settings -> Secrets -> New repository secret"
-            echo -e "\e[93m6. Name the secret '\e[94mPAT_TOKEN\e[93m'\e[0mand paste the copied token as the value"
+            echo -e "\e[93m6. Name the secret \e[94mPAT_TOKEN\e[93m and paste the copied token as the value"
             exit 1
           fi
       - name: Check Year Format
