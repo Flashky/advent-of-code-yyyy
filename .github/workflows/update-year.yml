@@ -23,4 +23,5 @@ jobs:
     - name: Check changes
       run: |
         cat "src/main/java/com/adventofcode/flashk/day01/README.md"
+        cat "pom.xml"
         
