@@ -25,6 +25,7 @@ jobs:
             exit 1
           fi
   update-year:
+    needs: verify
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -36,6 +37,5 @@ jobs:
         find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
     - name: Check changes
       run: |
-        cat "src/main/java/com/adventofcode/flashk/day01/README.md"
-        cat "pom.xml"
+        git status
         
