@@ -10,12 +10,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps: 
-      #- name: Check Repository
-       # run: |
-     #     if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
-          #  echo -e "\e[91Error: This workflow cannot be run from the template repository.\e[0m"
-     #       exit 1
-    #      fi
+      - name: Check Repository
+        run: |
+          if [ "${{ github.repository }}" == "Flashky/advent-of-code-yyyy" ]; then
+            echo -e "\e[91mError: This workflow cannot be run from the template repository.\e[0m"
+            exit 1
+          fi
       - name: Check for Token Secret
         run: |
           if [ -z "${{ secrets.PAT_TOKEN }}" ]; then
@@ -37,24 +37,30 @@ jobs:
             echo -e "\e[91mError: Invalid year format ('${{ github.event.inputs.aoc_year }}'). Please provide a valid 4-digit year.\e[0m"
             exit 1
           fi
-  update-year:
+  update:
     needs: verify
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Update README.md
-      run: |
-        find . -name 'README.md' | xargs sed -i 's/{year}/'${{ github.event.inputs.aoc_year }}'/g'
-    - name: Update pom.xml
-      run: |
-        find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
-    - name: Check changes
-      run: |
-        git status
     - name: Update Repository Topics
       run: |
         token="${{ secrets.PAT_TOKEN }}"
         url="https://api.github.com/repos/${{ github.repository }}/topics"
         topics="{\"names\": [\"java\", \"advent-of-code\", \"advent-of-code-${{ github.event.inputs.aoc_year }}\", \"advent-of-code-${{ github.event.inputs.aoc_year }}-java\"]}"
         curl -X PUT -H "Authorization: Bearer $token" -H "Accept: application/vnd.github.mercy-preview+json" -d "$topics" $url
+    - name: Update README.md
+      run: |
+        find . -name 'README.md' | xargs sed -i 's/{year}/'${{ github.event.inputs.aoc_year }}'/g'
+    - name: Update pom.xml
+      run: |
+        find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
+    - name: Commit and Push Changes
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        
+        git add .
+        git commit -m "Update year to ${{ github.event.inputs.aoc_year }}"
+        git push https://$PAT_TOKEN@github.com/${{ github.repository }}.git
+
         
