@@ -60,14 +60,13 @@ jobs:
     - name: Update pom.xml
       run: |
         find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
-    - name: Commit and Push Changes
+    - name: Commit Changes
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
         
         git add .
         git commit -m "Update year to ${{ github.event.inputs.aoc_year }}"
-        git push https://$GITHUB_TOKEN@github.com/${{ github.repository }}.git
     - name: Open Pull Request
       uses: peter-evans/create-pull-request@v5
       id: pull-request
