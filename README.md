@@ -25,7 +25,7 @@ In order to the GitHub Actions to be able to perform certain actions, a **Person
 
 1. Go to [Codacy](https://app.codacy.com) and add the repository.
 2. Open **Settings / Coverage** and copy the ``CODACY_PROJECT_TOKEN`` value.
-3. Go to the created [GitHub repository](https://github.com/Flashky/advent-of-code-{year}).
+3. Open the created repository.
 4. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
    1. **Name:** ``CODACY_PROJECT_TOKEN``
    2. **Secret:** The previously copied token.
