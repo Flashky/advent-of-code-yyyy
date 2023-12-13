@@ -16,19 +16,6 @@ jobs:
             echo -e "\e[91mError: This workflow cannot be run from the template repository.\e[0m"
             exit 1
           fi
-      - name: Check for Token Secret
-        run: |
-          if [ -z "${{ secrets.GITHUB_TOKEN }}" ]; then
-            echo -e "\e[91mError: GITHUB_TOKEN secret is not set.\e[0m"
-            echo -e "\e[93mTo generate a personal access token (PAT) for GitHub Actions:\e[0m"
-            echo -e "\e[93m1. Go to \e[94mhttps://github.com/settings/tokens\e[0m"
-            echo -e "\e[93m2. Click on \e[92mGenerate new token\e[0m\e[93m and then on \e[92mGenerate new token (classic) \e[0m\e[93m\e[0m"
-            echo -e "\e[93m3. Give your token a name, select the required scopes (e.g., repo), and click on \e[92mGenerate token\e[93m\e[0m"
-            echo -e "\e[93m4. Copy the generated token"
-            echo -e "\e[93m5. Go to your repository on GitHub -> Settings -> Secrets -> New repository secret"
-            echo -e "\e[93m6. Name the secret \e[94mGITHUB_TOKEN\e[93m and paste the copied token as the value"
-            exit 1
-          fi
       - name: Check Year Format
         run: |
           if echo "${{ github.event.inputs.aoc_year }}" | grep -E -q '^[0-9]{4}$'; then
