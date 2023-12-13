@@ -60,8 +60,8 @@ git push
 
 ### Almost done...
 
-1. Push the changes.
-2. Remove these instructions from ``README.md`` and...
+1. Remove these instructions from ``README.md``.
+2. Push the changes and...
 
 **Enjoy your new Advent of Code edition!**
 
