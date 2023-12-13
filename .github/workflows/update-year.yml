@@ -77,6 +77,7 @@ jobs:
         body: |
           Descripción detallada de los cambios realizados.
         base: "master"
+        head: "HEAD"
     - name: Check PR information
       if: ${{ steps.pull-request.outputs.pull-request-number }}
       run: |
