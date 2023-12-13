@@ -8,7 +8,6 @@
 2. Click on **Use this template**.
 3. Select **Create a new repository**:
    1. Give a name to the new repository. Example: ``advent-of-code-2022``.
-   2. Add a description to the new repository. Example: ``Advent of Code 2022``.
 
 ### Personal Access Token Setup
 
