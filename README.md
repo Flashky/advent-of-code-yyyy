@@ -41,8 +41,8 @@ In order to the GitHub Actions to be able to perform certain actions, a **Person
    2. Type the year in ``yyyy`` format and click on **Run workflow**.
 
 After the workflow has ended a Pull Request will be created:
-1. Go to [Pull requests](https://github.com/Flashky/advent-of-code-2024/pulls).
-2. Verify everything is right and then **approve** it.
+1. Open the [pull request](https://github.com/Flashky/advent-of-code-{year}/pull/1).
+2. Verify everything is right and then **merge** it.
    
 After the PR is merged the repository will have its description and topics description updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
 
