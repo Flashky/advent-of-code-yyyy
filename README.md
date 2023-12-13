@@ -1,55 +1,35 @@
 # Advent of Code {year}
 
-## How to create a repository from this template repository 
+## How to create a repository from this template repository
 
 ### Creation
 
-1. Open the main page of [this repository](https://github.com/Flashky/advent-of-code-yyyy).
+1. Open the main page of the [template repository](https://github.com/Flashky/advent-of-code-yyyy).
 2. Click on **Use this template**.
 3. Select **Create a new repository**:
    1. Give a name to the new repository. Example: ``advent-of-code-2022``.
    2. Add a description to the new repository. Example: ``Advent of Code 2022``.
 
+Once the repository is created, open it:
+1. Go to **Settings / Actions / General**.
+2. Under **Workflow permissions**, enable **Read and write permissions**.
+3. Go to **Actions** and open the **Update year** workflow:
+   1. Click on **Run workflow**.
+   2. Type the year in ``yyyy`` format and click on **Run workflow**.
 
-### Repository Setup
-
-#### Update year placeholders
-
-1. Clone the created repository.
-2. Update all ``README.md`` placeholders of ``{year}`` with the AoC year's edition value:
-
-```bash
-find . -name 'README.md' | xargs sed -i 's/{year}/THE_YEAR/g'
-```
-
-3. Update ``pom.xml`` placeholder of ``yyyy`` with the AoC year's edition value:
-
-```bash
-find . -name 'pom.xml' | xargs sed -i 's/yyyy/THE_YEAR/g'
-```
-
-Alternatively, you can also do it with any IDE or text editor.
-
-#### Update repository information
-
-1. Open the [GitHub repository](https://github.com/Flashky/advent-of-code-{year}).
-2. Click on settings next to **About** and add the following tags:
-    1. ``java``
-    2. ``advent-of-code``
-    3. ``advent-of-code-{year}``
-    4. ``advent-of-code-{year}-java``
+After the workflow has ended, the repository will have its topics assigned and all ``README.md`` and ``pom.xml`` will be updated with current year value.
 
 ### Data Repository Setup
 
-This new repository is meant to use a [submodule](https://github.blog/2016-02-01-working-with-submodules/) repository for privately storing the input files:
-1. Create the data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
-2. Open the solutions repository and execute:
-
+1. Create a private data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
+2. Add the data repository as a [submodule](https://github.blog/2016-02-01-working-with-submodules/) using the command:
 ```bash
-git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs
+git clone https://github.com/Flashky/advent-of-code-{year}.git &&
+git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git advent-of-code-{year}/src/test/resources/inputs && 
+git push
 ```
 
-### Data Repository Token Setup
+### Personal Access Token Setup
 
 In order to this repository GitHub Actions to be able to checkout the data repository, a **Personal Access Token** is needed:
 1. Open **Account / Settings / Developer Settings**.
@@ -74,7 +54,7 @@ In order to this repository GitHub Actions to be able to checkout the data repos
 
 1. Go to [Codacy](https://app.codacy.com) and open the repository.
 2. Open **Settings / General** and copy both the ``code quality`` and ``coverage`` badges.
-3. Add them to this README.md.
+3. Add them to this ``README.md``.
 
 ### Almost done...
 
@@ -128,5 +108,3 @@ git clone https://github.com/Flashky/advent-of-code-{year}.git --recurse-submodu
 ## About
 
 - [Advent of Code](https://adventofcode.com/{year}/about)
-
-
