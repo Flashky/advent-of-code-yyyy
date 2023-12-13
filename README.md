@@ -21,6 +21,15 @@ In order to the GitHub Actions to be able to perform certain actions, a **Person
    1. **Name:** ``PAT_TOKEN``
    2. **Secret:** The previously copied token.
 
+### Codacy Project Token Setup
+
+1. Go to [Codacy](https://app.codacy.com) and add the repository.
+2. Open **Settings / Coverage** and copy the ``CODACY_PROJECT_TOKEN`` value.
+3. Go to the created [GitHub repository](https://github.com/Flashky/advent-of-code-{year}).
+4. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
+   1. **Name:** ``CODACY_PROJECT_TOKEN``
+   2. **Secret:** The previously copied token.
+  
 ### Update repository information
 
 1. Go to **Settings / Actions / General**.
@@ -31,7 +40,11 @@ In order to the GitHub Actions to be able to perform certain actions, a **Person
    1. Click on **Run workflow**.
    2. Type the year in ``yyyy`` format and click on **Run workflow**.
 
-After the workflow has ended, the repository will have its topics assigned and all ``README.md`` and ``pom.xml`` will be updated with current year value.
+After the workflow has ended a Pull Request will be created:
+1. Go to [Pull requests](https://github.com/Flashky/advent-of-code-2024/pulls).
+2. Verify everything is right and then **approve** it.
+   
+After the PR is merged the repository will have its description and topics description updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
 
 ### Data Repository Setup
 
@@ -42,15 +55,6 @@ git clone https://github.com/Flashky/advent-of-code-{year}.git &&
 git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git advent-of-code-{year}/src/test/resources/inputs && 
 git push
 ```
-
-### Codacy Project Token Setup
-
-1. Go to [Codacy](https://app.codacy.com) and add the repository.
-2. Open **Settings / Coverage** and copy the ``CODACY_PROJECT_TOKEN`` value.
-3. Go to the created [GitHub repository](https://github.com/Flashky/advent-of-code-{year}).
-4. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
-   1. **Name:** ``CODACY_PROJECT_TOKEN``
-   2. **Secret:** The previously copied token.
 
 ### Codacy Badges Setup
 
