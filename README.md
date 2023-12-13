@@ -25,8 +25,10 @@ In order to the GitHub Actions to be able to perform certain actions, a **Person
 ### Update repository information
 
 1. Go to **Settings / Actions / General**.
-2. Under **Workflow permissions**, enable **Read and write permissions**.
-3. Go to **Actions** and open the **Update year** workflow:
+2. Under **Workflow permissions**:
+   1. Enable **Read and write permissions**.
+   2. Enable **Allow GitHub Actions to create and approve pull requests**.
+4. Go to **Actions** and open the **Update year** workflow:
    1. Click on **Run workflow**.
    2. Type the year in ``yyyy`` format and click on **Run workflow**.
 
