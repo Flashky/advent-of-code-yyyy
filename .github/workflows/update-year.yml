@@ -42,11 +42,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Update Repository Description  
+      run: |
+        token="${{ secrets.PAT_TOKEN }}"    
+        url=https://api.github.com/repos/${{ github.repository }}
+        description='{"description": "Advent of Code ${{ github.event.inputs_aoc_year }}"}'
+        curl -X PATCH -H "Authorization: Bearer $token" -H "Accept: application/vnd.github.v3+json" -d "$description" $url
     - name: Update Repository Topics
       run: |
         token="${{ secrets.PAT_TOKEN }}"
         url="https://api.github.com/repos/${{ github.repository }}/topics"
-        topics="{\"names\": [\"java\", \"advent-of-code\", \"advent-of-code-${{ github.event.inputs.aoc_year }}\", \"advent-of-code-${{ github.event.inputs.aoc_year }}-java\"]}"
+        topics='{"names": ["java", "advent-of-code", "advent-of-code-${{ github.event.inputs.aoc_year }}", "advent-of-code-${{ github.event.inputs.aoc_year }}-java"]}'
         curl -X PUT -H "Authorization: Bearer $token" -H "Accept: application/vnd.github.mercy-preview+json" -d "$topics" $url
     - name: Update README.md
       run: |
@@ -62,5 +68,20 @@ jobs:
         git add .
         git commit -m "Update year to ${{ github.event.inputs.aoc_year }}"
         git push https://$GITHUB_TOKEN@github.com/${{ github.repository }}.git
+    - name: Open Pull Request
+      uses: peter-evans/create-pull-request@v5
+      id: pull-request
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        branch: master
+        title: "Update year to ${{ github.event.inputs.aoc_year }}"
+        body: |
+          Descripción detallada de los cambios realizados.
+        base: "master"
+    - name: Check PR information
+      if: ${{ steps.pull-request.outputs.pull-request-number }}
+      run: |
+        echo "Pull Request Number - ${{ steps.pull-request.outputs.pull-request-number }}"
+        echo "Pull Request URL - ${{ steps.pull-request.outputs.pull-request-url }}"
 
         
