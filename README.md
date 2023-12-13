@@ -10,7 +10,20 @@
    1. Give a name to the new repository. Example: ``advent-of-code-2022``.
    2. Add a description to the new repository. Example: ``Advent of Code 2022``.
 
-Once the repository is created, open it:
+### Personal Access Token Setup
+
+In order to the GitHub Actions to be able to perform certain actions, a **Personal Access Token** is needed:
+1. Open **Account / Settings / Developer Settings**.
+2. Click on **Generate New Token**.
+3. Select ``repo`` checkbox.
+4. Copy the token.
+5. Open the created repository.
+6. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
+   1. **Name:** ``PAT_TOKEN``
+   2. **Secret:** The previously copied token.
+
+### Update repository information
+
 1. Go to **Settings / Actions / General**.
 2. Under **Workflow permissions**, enable **Read and write permissions**.
 3. Go to **Actions** and open the **Update year** workflow:
@@ -28,18 +41,6 @@ git clone https://github.com/Flashky/advent-of-code-{year}.git &&
 git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git advent-of-code-{year}/src/test/resources/inputs && 
 git push
 ```
-
-### Personal Access Token Setup
-
-In order to this repository GitHub Actions to be able to checkout the data repository, a **Personal Access Token** is needed:
-1. Open **Account / Settings / Developer Settings**.
-2. Click on **Generate New Token**.
-3. Select ``repo`` checkbox.
-4. Copy the token.
-5. Go to the created [GitHub solutions repository](https://github.com/Flashky/advent-of-code-{year}).
-6. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
-   1. **Name:** ``PAT_TOKEN``
-   2. **Secret:** The previously copied token.
 
 ### Codacy Project Token Setup
 
