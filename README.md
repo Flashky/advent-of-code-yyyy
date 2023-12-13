@@ -44,12 +44,13 @@ After the workflow has ended a Pull Request will be created:
 1. Open the [pull request](https://github.com/Flashky/advent-of-code-{year}/pull/1).
 2. Verify everything is right and then **merge** it.
    
-After the PR is merged the repository will have its description and topics description updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
+After the PR is merged the repository will have its description and topics updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
 
 ### Data Repository Setup
 
 1. Create a private data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
 2. Add the data repository as a [submodule](https://github.blog/2016-02-01-working-with-submodules/) using the command:
+
 ```bash
 git clone https://github.com/Flashky/advent-of-code-{year}.git &&
 git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git advent-of-code-{year}/src/test/resources/inputs && 
