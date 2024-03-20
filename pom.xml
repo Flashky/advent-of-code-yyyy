@@ -9,7 +9,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<lombok.version>1.18.30</lombok.version>
+		<lombok.version>1.18.32</lombok.version>
 		<!-- Testing -->
 		<junit.jupiter.version>5.10.1</junit.jupiter.version>
 		<!-- Plugins -->
