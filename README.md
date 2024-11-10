@@ -1,6 +1,37 @@
 # Advent of Code {year}
 
-## How to create a repository from this template repository
+## Housekeeping
+
+Before creating a new repository from this template, perform the following steps.
+
+### Personal Access Token Setup
+
+Open **[Personal access tokens (classic)](https://github.com/settings/tokens)** settings and verify if there is any
+``PAT_TOKEN`` or if it is nearly to expire.
+
+#### Creation of a new token
+
+If there is no ``PAT_TOKEN`` created:
+
+1. Click on **Generate New Token**.
+2. Select ``repo`` checkbox.
+3. Copy the token.
+
+#### Refresh of an existing token
+
+If there is an existing ``PAT_TOKEN``:
+
+1. Click on it.
+2. If the expiration date is due soon, click on **regenerate the token**.
+3. Update the ``PAT_TOKEN`` at this template repository.
+
+### Update dependencies
+
+Before creating a new repository using this template, **review and merge any pending pull requests**.
+
+## New repository creation
+
+Follow this steps after housekeeping is finished.
 
 ### Creation
 
@@ -11,15 +42,7 @@
 
 ### Personal Access Token Setup
 
-In order to the GitHub Actions to be able to perform certain actions, a **Personal Access Token** is needed:
-1. Open **Account / Settings / Developer Settings**.
-2. Click on **Generate New Token**.
-3. Select ``repo`` checkbox.
-4. Copy the token.
-5. Open the created repository.
-6. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
-   1. **Name:** ``PAT_TOKEN``
-   2. **Secret:** The previously copied token.
+Add the previously mentioned ``PAT_TOKEN`` to this new repository.
 
 ### Codacy Project Token Setup
 
