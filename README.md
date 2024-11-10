@@ -27,7 +27,10 @@ If there is an existing ``PAT_TOKEN``:
 
 ### Update dependencies
 
-Before creating a new repository using this template, **review and merge any pending pull requests**.
+Open [dependency graph](https://github.com/Flashky/advent-of-code-yyyy/network/updates) settings and run
+the ``pom.xml`` job to force checking for any pending updates.
+
+Review and merge any pending pull requests.
 
 ## New repository creation
 
