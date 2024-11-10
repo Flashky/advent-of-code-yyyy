@@ -70,7 +70,7 @@ Add the previously mentioned ``PAT_TOKEN`` to this new repository.
    2. Type the year in ``yyyy`` format and click on **Run workflow**.
 
 After the workflow has ended a Pull Request will be created:
-1. Open the [pull request](https://github.com/Flashky/advent-of-code-{year}/pull/1).
+1. Open the **pull request**.
 2. Verify everything is right and then **merge** it.
    
 After the PR is merged the repository will have its description and topics updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
@@ -82,7 +82,8 @@ After the PR is merged the repository will have its description and topics updat
 
 ```bash
 git clone https://github.com/Flashky/advent-of-code-{year}.git &&
-git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git advent-of-code-{year}/src/test/resources/inputs && 
+cd advent-of-code-{year} &&
+git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs && 
 git push
 ```
 
