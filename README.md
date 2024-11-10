@@ -27,8 +27,11 @@ If there is an existing ``PAT_TOKEN``:
 
 ### Update dependencies
 
-Open [dependency graph](https://github.com/Flashky/advent-of-code-yyyy/network/updates) settings and run
-the ``pom.xml`` job to force checking for any pending updates.
+Open [dependency graph](https://github.com/Flashky/advent-of-code-yyyy/network/updates) settings 
+and manually run the following jobs:
+
+- ``pom.xml``
+- ``.github/workflows/build-report.yml``
 
 Review and merge any pending pull requests.
 
