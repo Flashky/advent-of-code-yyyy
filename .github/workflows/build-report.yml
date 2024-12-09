@@ -57,11 +57,6 @@ jobs:
       with:
         name: jacoco-report
         path: target/site/jacoco
-    - uses: codecov/codecov-action@v5
-      name: Send coverage to Codecov
-      with:
-        file: ./**/target/site/jacoco/jacoco.xml
-        name: codecov
     - name: Send coverage to Codacy
       uses: codacy/codacy-coverage-reporter-action@master
       with:
