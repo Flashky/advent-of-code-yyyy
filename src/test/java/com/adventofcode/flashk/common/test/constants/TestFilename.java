@@ -5,12 +5,12 @@ public final class TestFilename {
 	private TestFilename() {}
 	
 	// Common filenames used by all tests
-	public final static String INPUT_FILE = "data.input";
-	public final static String INPUT_FILE_SAMPLE = "sample.input";
-	public final static String INPUT_FILE_SINGLE_SAMPLE = "single_sample.input";
+	public static final String INPUT_FILE = "input.txt";
+	public static final String SAMPLE_FILE = "sample.txt";
+	public static final String SAMPLE_SINGLE_FILE = "sample_single.txt";
 
 	// Other tests
-	public final static String ARRAY_JSON = "array.json";
-	public final static String INVALID_JSON = "invalid.json";
+	public static final String ARRAY_JSON = "array.json";
+	public static final String INVALID_JSON = "invalid.json";
 
 }

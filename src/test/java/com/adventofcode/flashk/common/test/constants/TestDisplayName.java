@@ -32,11 +32,11 @@ public final class TestDisplayName {
 	public static final String DAY_25 = "Day 25";
 	
 	// Test display names
-	public static final String PART_1_SAMPLE = "Part 1 - Sample data";
-	public static final String PART_1_INPUT = "Part 1 - Input data";
+	public static final String PART_1_SAMPLE = "Part 1 - Sample";
+	public static final String PART_1_INPUT = "Part 1 - Input";
 	public static final String PART_1_DEBUG = "Part 1 - Debug";
-	public static final String PART_2_SAMPLE = "Part 2 - Sample data";
-	public static final String PART_2_INPUT = "Part 2 - Input data";
+	public static final String PART_2_SAMPLE = "Part 2 - Sample";
+	public static final String PART_2_INPUT = "Part 2 - Input";
 	public static final String PART_2_DEBUG = "Part 2 - Debug";
 
 	public static final String PART_1_SINGLE_SAMPLE = "Part 1 - Single sample data";
