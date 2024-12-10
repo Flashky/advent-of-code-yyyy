@@ -13,49 +13,41 @@ public final class BaseUtil {
 	public static Long binaryToDec(String bin) {
 	    return Long.parseLong(bin, 2);
 	}
-	
-	/**
-	 * Converts from hexadecimal to binary.
-	 * <p>
-	 * Any hexadecimal number can be represented with 4 binary digits (<code>6 hex = 0110 bin</code>).
-	 * </p>
-	 * <p>
-	 * Leading zero digits won't be included in the converted number.
-	 * Use {@link #hexToBinaryPadLeft(String)} if they need to be included.
-	 * </p>
-	 * <p>
-	 * 	<b>Examples:</b>
-	 * </p>
-	 * <pre>
-	 * 	BaseUtil.hexToBinary("6") = "110"
-	 * </pre>
-	 * @param hex the hexadecimal code
-	 * @return the translated binary code
-	 * @see #hexToBinaryPadLeft(String)
-	 */
+
+	/// Converts from hexadecimal to binary.
+	///
+	/// Any hexadecimal number can be represented with 4 binary digits (`6 hex = 0110 bin`).
+	///
+	/// Leading zero digits won't be included in the converted number.
+	/// Use [hexToBinaryPadLeft][#hexToBinaryPadLeft(String)] if they need to be included.
+	///
+	/// **Examples:**
+	///
+	/// ```java
+	/// 	BaseUtil.hexToBinary("6") // returns "110"
+	/// ```
+	/// @param hex the hexadecimal code
+	/// @return the translated binary code
+	/// @see #hexToBinaryPadLeft(String)
 	public static String hexToBinary(String hex) {
 	    return new BigInteger(hex, 16).toString(2);
 	}
-	
-	/**
-	 * Converts from hexadecimal to binary and adds zero padding at the leading.
-	 * <p>
-	 * Any hexadecimal number can be represented with 4 binary digits (<code>6 hex = 0110 bin</code>).
-	 * </p>
-	 * </p>
-	 * Leading zero digits will be included in the converted number.
-	 * Use {@link #hexToBinary(String)} if they need to be removed from the result.
-	 * </p>
-	 * <p>
-	 * 	<b>Examples:</b> 
-	 * </p>
-	 * <pre>
-	 * 	BaseUtil.hexToBinaryPadLeft("6") = "0110"
-	 * </pre>
-	 * @param hex the hexadecimal code
-	 * @return the translated binary code, it will always have a multiple of 4 digits.
-	 * @see #hexToBinary(String)
-	 */
+
+	/// Converts from hexadecimal to binary and adds zero padding at the leading.
+	///
+	/// Any hexadecimal number can be represented with 4 binary digits (`6 hex = 0110 bin`).
+	///
+	/// Leading zero digits will be included in the converted number.
+	/// Use [hexToBinary][#hexToBinary(String)] if they need to be removed from the result.
+	///
+	/// **Examples:**
+	///
+	/// ```java
+	/// BaseUtil.hexToBinaryPadLeft("6"); // returns "0110"
+	/// ```
+	/// @param hex the hexadecimal code
+	/// @return the translated binary code, it will always have a multiple of 4 digits.
+	/// @see #hexToBinary(String)
 	public static String hexToBinaryPadLeft(String hex) {
 	    String unpaddedBinary = BaseUtil.hexToBinary(hex);
 	    int size = hex.length() * 4;

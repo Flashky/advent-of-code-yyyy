@@ -4,11 +4,9 @@ public class Array2DUtil {
 
     private Array2DUtil() {}
 
-    /**
-     * Transposes the given 2D array.
-     * @param array the array to transpose.
-     * @return a new 2D array that is the transpose of the given array.
-     */
+    /// Transposes the given 2D array.
+    /// @param array the array to transpose.
+    /// @return a new 2D char array that is the transpose of the given array.
     public static char[][] transpose(char[][] array) {
         int rows = array.length;
         int cols = array[0].length;
@@ -21,10 +19,8 @@ public class Array2DUtil {
         return transposedArray;
     }
 
-    /**
-     * Paints the given array.
-     * @param map the array to paint
-     */
+    /// Paints the given 2D array.
+    /// @param map the array to paint.
     public static void paint(char[][] map) {
 
         System.out.println();
