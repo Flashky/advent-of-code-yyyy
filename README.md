@@ -55,10 +55,15 @@ Add the previously mentioned ``PAT_TOKEN`` to this new repository.
 1. Go to [Codacy](https://app.codacy.com) and add the repository.
 2. Open **Settings / Coverage** and copy the ``CODACY_PROJECT_TOKEN`` value.
 3. Open the created repository.
-4. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
+5. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
    1. **Name:** ``CODACY_PROJECT_TOKEN``
    2. **Secret:** The previously copied token.
-  
+6. Open **Settings / Secrets and variables / Dependabot secrets** and click on **New repository secret**:
+   1. **Name:** ``CODACY_PROJECT_TOKEN``
+   2. **Secret:** The previously copied token.
+
+Dependabot secrets are used on Dependabot Pull Requests. Not setting up the ``CODACY_PROJECT_TOKEN`` will result in failing the sending coverage report to Codacy step job of the build.
+
 ### Update repository information
 
 1. Go to **Settings / Actions / General**.
