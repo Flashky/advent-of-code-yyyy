@@ -76,4 +76,42 @@ class MathUtilTest {
         function = i -> Math.pow(i,3) - Math.pow(i,2);
         assertEquals(350, MathUtil.summation(1, 6, function));
     }
+
+    @Test
+    void testProductWithIntFunction() {
+
+        // Example function: f(i) = i
+        IntFunction<Integer> function = i -> i;
+        assertEquals(0, MathUtil.product(0, 0, function));
+        assertEquals(1, MathUtil.product(1, 1, function));
+        assertEquals(120, MathUtil.product(1, 5, function));
+
+        // Example function: f(i) = 2*i
+        function = i -> 2 * i;
+        assertEquals(384, MathUtil.product(1,4, function));
+
+        //  Example function: f(i) = i^2
+        function = i -> i * i;
+        assertEquals(14400, MathUtil.product(1, 5, function));
+
+    }
+
+    @Test
+    void testProductWithLongFunction() {
+
+        // Example function: f(i) = i
+        LongFunction<Long> function = i -> i;
+        assertEquals(0, MathUtil.product(0, 0, function));
+        assertEquals(1, MathUtil.product(1, 1, function));
+        assertEquals(120, MathUtil.product(1, 5, function));
+
+        // Example function: f(i) = 2*i
+        function = i -> 2 * i;
+        assertEquals(384, MathUtil.product(1,4, function));
+
+        //  Example function: f(i) = i^2
+        function = i -> i * i;
+        assertEquals(14400, MathUtil.product(1, 5, function));
+
+    }
 }
