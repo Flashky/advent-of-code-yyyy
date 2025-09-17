@@ -1,6 +1,6 @@
 package com.adventofcode.flashk.common;
 
-import java.math.BigInteger;
+import module java.base;
 
 public final class BaseUtil {
 

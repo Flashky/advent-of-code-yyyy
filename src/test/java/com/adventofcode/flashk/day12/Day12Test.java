@@ -1,6 +1,6 @@
 package com.adventofcode.flashk.day12;
 
-import java.util.List;
+import module java.base;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
