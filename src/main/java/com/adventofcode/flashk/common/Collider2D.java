@@ -1,6 +1,6 @@
 package com.adventofcode.flashk.common;
 
-import java.util.Objects;
+import module java.base;
 
 import lombok.Getter;
 
