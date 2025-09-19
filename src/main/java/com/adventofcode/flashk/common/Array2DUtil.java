@@ -1,5 +1,7 @@
 package com.adventofcode.flashk.common;
 
+import static java.lang.IO.println;
+
 public class Array2DUtil {
 
     private Array2DUtil() {}
@@ -23,11 +25,11 @@ public class Array2DUtil {
     /// @param map the array to paint.
     public static void paint(char[][] map) {
 
-        System.out.println();
+        println();
         for (char[] chars : map) {
-            System.out.println(chars);
+            println(chars);
         }
-        System.out.println();
+        println();
 
     }
 }
