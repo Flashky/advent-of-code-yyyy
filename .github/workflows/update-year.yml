@@ -60,6 +60,14 @@ jobs:
     - name: Update pom.xml
       run: |
         find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ github.event.inputs.aoc_year }}'/g'
+
+    # Delete folders from days 13 to 25 if AoC event is 2025 or newer.
+    - name: Conditionally Remove Day Folders (2025+)
+      if: ${{ github.event.inputs.aoc_year >= 2025 }}
+      run: |
+        echo "Year ${{ github.event.inputs.aoc_year }} is 2025 or greater. Removing day13-day25 folders."
+        rm -rf "src/{main,test}/java/com/adventofcode/flashk/day"{13..25}
+
     - name: Open Pull Request
       uses: peter-evans/create-pull-request@v7
       id: pull-request
