@@ -78,7 +78,7 @@ git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-dat
 git push
 ```
 
-### 🏆 5. Codacy Badges (Optional)
+### 🏆 5. Codacy Badges
 
 1.  Go to [Codacy](https://app.codacy.com) and open your repository.
 2.  Open **Settings / General** and **copy** both the `code quality` and `coverage` badges.
