@@ -28,7 +28,7 @@ The `PAT_TOKEN` is necessary for GitHub Actions (like Dependabot and year update
     * Go to **[Personal access tokens (classic)](https://github.com/settings/tokens)**.
     * If you don't have a token named `PAT_TOKEN` (or similar), click **Generate New Token**, select the `repo` scope, and **copy the generated token**.
     * If an existing `PAT_TOKEN` is close to expiring, click on it, select **regenerate the token**, and **copy the new value**.
-2.  **Add the Secret:** Add the copied token as a secret in the **new** repository.
+2.  **Add the PAT to the new repository:**
     * Go to **Settings / Secrets and variables / Actions**.
     * Create a new repository secret: **Name:** `PAT_TOKEN`, **Secret:** *\[Your Token]*
 
