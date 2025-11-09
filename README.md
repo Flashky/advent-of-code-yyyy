@@ -132,8 +132,7 @@ git push
 - [Day 24](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day24)
 - [Day 25](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day25)
 
-### Cloning this repository
-
+## Cloning this repository
 
 Without data repository:
 
