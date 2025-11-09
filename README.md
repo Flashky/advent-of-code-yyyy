@@ -69,15 +69,14 @@ To privately manage your input files for each day.
 
 1.  **Create Data Repository:**
     * Create a **private** repository using the [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template.
-2.  **Add as a Submodule:**
-    * Clone your new repository locally and add the data repository as a submodule.
+2.  **Add as a [Submodule](https://github.blog/2016-02-01-working-with-submodules/):**
 
-    ```bash
-    # Ensure you are in the root directory of your new repository
-    git submodule add -b master [https://github.com/Flashky/advent-of-code-](https://github.com/Flashky/advent-of-code-){year}-data.git src/test/resources/inputs
-    git commit -m "feat: Add data repository submodule"
-    git push
-    ```
+```bash
+git clone https://github.com/Flashky/advent-of-code-{year}.git &&
+cd advent-of-code-{year} &&
+git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs && 
+git push
+```
 
 ### 🏆 5. Codacy Badges (Optional)
 
