@@ -6,7 +6,7 @@ This guide will help you quickly configure a new repository from this template f
 
 > **❗ IMPORTANT: Template Maintenance**
 >
-> **Before starting the setup:** Ensure the **Maintenance Tasks** section is completed on the **template repository**. This guarantees all dependencies and tokens are current.
+> **Before starting the setup:** Ensure the **[Maintenance Tasks](#maintenance-tasks)** section is completed on the **template repository**. This guarantees all dependencies and tokens are up-to-date.
 
 ---
 
