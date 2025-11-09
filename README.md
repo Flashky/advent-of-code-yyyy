@@ -1,89 +1,75 @@
-# Advent of Code {year}
+# 🎄 Advent of Code {year}
 
-## Housekeeping
+## ⚙️ Setup Guide
 
-Before creating a new repository from this template, perform the following steps.
+This guide will help you quickly configure a new repository from this template for the current year's Advent of Code.
 
-### Personal Access Token Setup
+> **❗ IMPORTANT: Template Maintenance**
+>
+> **Before starting the setup:** Ensure the **[Maintenance Tasks](#maintenance-tasks)** section is completed on the **template repository** to guarantee that all dependencies are up-to-date.
 
-Open **[Personal access tokens (classic)](https://github.com/settings/tokens)** settings and verify if there is any
-``PAT_TOKEN`` or if it is nearly to expire.
+---
 
-#### Creation of a new token
+### 🚀 1. New Repository Creation
 
-If there is no ``PAT_TOKEN`` created:
+1.  Open the main page of the [template repository](https://github.com/Flashky/advent-of-code-yyyy).
+2.  Click **Use this template** and then **Create a new repository**.
+3.  Name the new repository (e.g., `advent-of-code-202X`).
 
-1. Click on **Generate New Token**.
-2. Select ``repo`` checkbox.
-3. Copy the token.
+### 🔑 2. Token and Secret Configuration
 
-#### Refresh of an existing token
+You need to set up two tokens: the **GitHub** token (`PAT_TOKEN`) and the **Codacy** token (`CODACY_PROJECT_TOKEN`).
 
-If there is an existing ``PAT_TOKEN``:
+#### A. 🐙 Personal Access Token (PAT)
 
-1. Click on it.
-2. If the expiration date is due soon, click on **regenerate the token**.
-3. Update the ``PAT_TOKEN`` at this template repository.
+The `PAT_TOKEN` is necessary for GitHub Actions (like Dependabot and year update) to function correctly.
 
-### Update dependencies
+1.  **Verify/Create the PAT:**
+    * Go to **[Personal access tokens (classic)](https://github.com/settings/tokens)**.
+    * If you don't have a token named `PAT_TOKEN` (or similar), click **Generate New Token**, select the `repo` scope, and **copy the generated token**.
+    * If an existing `PAT_TOKEN` is close to expiring, click on it, select **regenerate the token**, and **copy the new value**.
+2.  **Add the PAT to the new repository:**
+    * Go to **Settings / Secrets and variables / Actions**.
+    * Create a new repository secret: **Name:** `PAT_TOKEN`, **Secret:** *\[Your Token]*
 
-Open [dependency graph](https://github.com/Flashky/advent-of-code-yyyy/network/updates) settings 
-and manually run the following jobs:
+#### B. 🛡️ Codacy Project Token
 
-- ``pom.xml``
-- ``.github/workflows/build-report.yml``
+Required to send code coverage reports.
 
-Review and merge any pending pull requests.
+1.  **Get the Codacy Token:**
+    * Go to [Codacy](https://app.codacy.com) and **add your new repository**.
+    * Open **Settings / Coverage** and **copy** the `CODACY_PROJECT_TOKEN` value.
+2.  **Add the Secret (x2):** You need to add the token in **two** locations.
+    * **Actions:** Go to **Settings / Secrets and variables / Actions**.
+        * Create a new secret: **Name:** `CODACY_PROJECT_TOKEN`, **Secret:** *\[Codacy Token]*
+    * **Dependabot:** Go to **Settings / Secrets and variables / Dependabot secrets**.
+        * Create a new secret: **Name:** `CODACY_PROJECT_TOKEN`, **Secret:** *\[Codacy Token]*
 
-## New repository creation
+> 💡 **Note:** Setting the secret for Dependabot is crucial to prevent automated Pull Requests from failing the coverage report job.
 
-Follow this steps after housekeeping is finished.
+### 📅 3. Year Update and Permissions
 
-### Creation
+1.  **Configure Workflow Permissions:**
+    * Go to **Settings / Actions / General**.
+    * Under **Workflow permissions**, enable:
+        * **Read and write permissions**.
+        * **Allow GitHub Actions to create and approve pull requests**.
+2.  **Run "Update year" Workflow:**
+    * Go to the **Actions** tab and open the **Update year** workflow.
+    * Click **Run workflow**, type the **year** in `yyyy` format (e.g., `2025`), and **Run workflow**.
+3.  **Merge the Pull Request:**
+    * The workflow will automatically create a Pull Request.
+    * **Open it**, verify the year changes are correct, and **merge** it.
 
-1. Open the main page of the [template repository](https://github.com/Flashky/advent-of-code-yyyy).
-2. Click on **Use this template**.
-3. Select **Create a new repository**:
-   1. Give a name to the new repository. Example: ``advent-of-code-2022``.
+> After merging, the repository description, topics, and all `README.md` and `pom.xml` files will be updated with the correct year.
 
-### Personal Access Token Setup
+### 💾 4. Data Repository Setup
 
-Add the previously mentioned ``PAT_TOKEN`` to this new repository.
+To privately manage your input files for each day.
 
-### Codacy Project Token Setup
-
-1. Go to [Codacy](https://app.codacy.com) and add the repository.
-2. Open **Settings / Coverage** and copy the ``CODACY_PROJECT_TOKEN`` value.
-3. Open the created repository.
-5. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
-   1. **Name:** ``CODACY_PROJECT_TOKEN``
-   2. **Secret:** The previously copied token.
-6. Open **Settings / Secrets and variables / Dependabot secrets** and click on **New repository secret**:
-   1. **Name:** ``CODACY_PROJECT_TOKEN``
-   2. **Secret:** The previously copied token.
-
-Dependabot secrets are used on Dependabot Pull Requests. Not setting up the ``CODACY_PROJECT_TOKEN`` will result in failing the sending coverage report to Codacy step job of the build.
-
-### Update repository information
-
-1. Go to **Settings / Actions / General**.
-2. Under **Workflow permissions**:
-   1. Enable **Read and write permissions**.
-   2. Enable **Allow GitHub Actions to create and approve pull requests**.
-4. Go to **Actions** and open the **Update year** workflow:
-   1. Click on **Run workflow**.
-   2. Type the year in ``yyyy`` format and click on **Run workflow**.
-
-After the workflow has ended a Pull Request will be created:
-1. Open the **pull request**.
-2. Verify everything is right and then **merge** it.
-   
-After the PR is merged the repository will have its description and topics updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
-
-### Data Repository Setup
-
-1. Create a private data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
-2. Add the data repository as a [submodule](https://github.blog/2016-02-01-working-with-submodules/) using the command:
+1.  **Create Data Repository:**
+    * Create a **private** repository using the [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template.
+2.  **Add as a [Submodule](https://github.blog/2016-02-01-working-with-submodules/):**
 
 ```bash
 git clone https://github.com/Flashky/advent-of-code-{year}.git &&
@@ -92,18 +78,31 @@ git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-dat
 git push
 ```
 
-### Codacy Badges Setup
+### 🏆 5. Codacy Badges
 
-1. Go to [Codacy](https://app.codacy.com) and open the repository.
-2. Open **Settings / General** and copy both the ``code quality`` and ``coverage`` badges.
-3. Add them to this ``README.md``.
+1.  Go to [Codacy](https://app.codacy.com) and open your repository.
+2.  Open **Settings / General** and **copy** both the `code quality` and `coverage` badges.
+3.  **Add them** to this `README.md` (replace or add to the top).
 
-### Almost done...
+### ✅ 6. Final Steps
 
-1. Remove these instructions from ``README.md``.
-2. Push the changes and...
+1.  **Remove all these setup instructions** from the `README.md`.
+2.  **Commit and push** the changes.
 
 **Enjoy your new Advent of Code edition!**
+
+---
+
+<a name="maintenance-tasks"></a>
+## 🛠️ Maintenance Tasks
+
+> ⚠️ These steps should be performed on the original **template repository** before creating the new repository.
+
+### Update Dependencies
+
+* Go to the [dependency graph](https://github.com/Flashky/advent-of-code-yyyy/network/updates).
+* Manually run the following jobs: **`pom.xml`** and **`.github/workflows/build-report.yml`**.
+* Review and merge any pending pull requests.
 
 ---
 
