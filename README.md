@@ -1,152 +1,85 @@
-# Advent of Code {year}
+# 🎄 Advent of Code {year}
 
-## Housekeeping
+## ⚙️ Setup Guide
 
-Before creating a new repository from this template, perform the following steps.
+This guide will help you quickly configure a new repository from this template for the current year's Advent of Code.
 
-### Personal Access Token Setup
-
-Open **[Personal access tokens (classic)](https://github.com/settings/tokens)** settings and verify if there is any
-``PAT_TOKEN`` or if it is nearly to expire.
-
-#### Creation of a new token
-
-If there is no ``PAT_TOKEN`` created:
-
-1. Click on **Generate New Token**.
-2. Select ``repo`` checkbox.
-3. Copy the token.
-
-#### Refresh of an existing token
-
-If there is an existing ``PAT_TOKEN``:
-
-1. Click on it.
-2. If the expiration date is due soon, click on **regenerate the token**.
-3. Update the ``PAT_TOKEN`` at this template repository.
-
-### Update dependencies
-
-Open [dependency graph](https://github.com/Flashky/advent-of-code-yyyy/network/updates) settings 
-and manually run the following jobs:
-
-- ``pom.xml``
-- ``.github/workflows/build-report.yml``
-
-Review and merge any pending pull requests.
-
-## New repository creation
-
-Follow this steps after housekeeping is finished.
-
-### Creation
-
-1. Open the main page of the [template repository](https://github.com/Flashky/advent-of-code-yyyy).
-2. Click on **Use this template**.
-3. Select **Create a new repository**:
-   1. Give a name to the new repository. Example: ``advent-of-code-2022``.
-
-### Personal Access Token Setup
-
-Add the previously mentioned ``PAT_TOKEN`` to this new repository.
-
-### Codacy Project Token Setup
-
-1. Go to [Codacy](https://app.codacy.com) and add the repository.
-2. Open **Settings / Coverage** and copy the ``CODACY_PROJECT_TOKEN`` value.
-3. Open the created repository.
-5. Open **Settings / Secrets and variables / Actions** and click on **New repository secret**:
-   1. **Name:** ``CODACY_PROJECT_TOKEN``
-   2. **Secret:** The previously copied token.
-6. Open **Settings / Secrets and variables / Dependabot secrets** and click on **New repository secret**:
-   1. **Name:** ``CODACY_PROJECT_TOKEN``
-   2. **Secret:** The previously copied token.
-
-Dependabot secrets are used on Dependabot Pull Requests. Not setting up the ``CODACY_PROJECT_TOKEN`` will result in failing the sending coverage report to Codacy step job of the build.
-
-### Update repository information
-
-1. Go to **Settings / Actions / General**.
-2. Under **Workflow permissions**:
-   1. Enable **Read and write permissions**.
-   2. Enable **Allow GitHub Actions to create and approve pull requests**.
-4. Go to **Actions** and open the **Update year** workflow:
-   1. Click on **Run workflow**.
-   2. Type the year in ``yyyy`` format and click on **Run workflow**.
-
-After the workflow has ended a Pull Request will be created:
-1. Open the **pull request**.
-2. Verify everything is right and then **merge** it.
-   
-After the PR is merged the repository will have its description and topics updated. Also, all ``README.md`` and ``pom.xml`` will be updated with current year value. The PR can be declined and workflow can be executed again if there was any problem that needed a fix.
-
-### Data Repository Setup
-
-1. Create a private data repository using [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template repository and set it up.
-2. Add the data repository as a [submodule](https://github.blog/2016-02-01-working-with-submodules/) using the command:
-
-```bash
-git clone https://github.com/Flashky/advent-of-code-{year}.git &&
-cd advent-of-code-{year} &&
-git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs && 
-git push
-```
-
-### Codacy Badges Setup
-
-1. Go to [Codacy](https://app.codacy.com) and open the repository.
-2. Open **Settings / General** and copy both the ``code quality`` and ``coverage`` badges.
-3. Add them to this ``README.md``.
-
-### Almost done...
-
-1. Remove these instructions from ``README.md``.
-2. Push the changes and...
-
-**Enjoy your new Advent of Code edition!**
+> **❗ IMPORTANT: Template Maintenance**
+>
+> **Before starting the setup:** Ensure the **Maintenance Tasks** section is completed on the **template repository**. This guarantees all dependencies and tokens are current.
 
 ---
 
-- [Day 1](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day01)
-- [Day 2](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day02)
-- [Day 3](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day03)
-- [Day 4](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day04)
-- [Day 5](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day05)
-- [Day 6](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day06)
-- [Day 7](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day07)
-- [Day 8](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day08)
-- [Day 9](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day09)
-- [Day 10](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day10)
-- [Day 11](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day11)
-- [Day 12](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day12)
-- [Day 13](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day13)
-- [Day 14](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day14)
-- [Day 15](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day15)
-- [Day 16](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day16)
-- [Day 17](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day17)
-- [Day 18](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day18)
-- [Day 19](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day19)
-- [Day 20](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day20)
-- [Day 21](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day21)
-- [Day 22](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day22)
-- [Day 23](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day23)
-- [Day 24](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day24)
-- [Day 25](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day25)
+### 🚀 1. New Repository Creation
 
-## Cloning this repository
+1.  Open the main page of the [template repository](https://github.com/Flashky/advent-of-code-yyyy).
+2.  Click **Use this template** and then **Create a new repository**.
+3.  Name the new repository (e.g., `advent-of-code-202X`).
 
-Without data repository:
+### 🔑 2. Token and Secret Configuration
 
-```bash
-git clone https://github.com/Flashky/advent-of-code-{year}.git
-```
+You need to set up two tokens: the **GitHub** token (`PAT_TOKEN`) and the **Codacy** token (`CODACY_PROJECT_TOKEN`).
 
-Including data repository:
+#### A. 🐙 Personal Access Token (PAT)
 
-```bash
-git clone https://github.com/Flashky/advent-of-code-{year}.git --recurse-submodules
-```
+The `PAT_TOKEN` is necessary for GitHub Actions (like Dependabot and year update) to function correctly.
 
-## About
+1.  **Verify/Create the PAT:**
+    * Go to **[Personal access tokens (classic)](https://github.com/settings/tokens)**.
+    * If you don't have a token named `PAT_TOKEN` (or similar), click **Generate New Token**, select the `repo` scope, and **copy the generated token**.
+    * If an existing `PAT_TOKEN` is close to expiring, click on it, select **regenerate the token**, and **copy the new value**.
+2.  **Add the Secret:** Add the copied token as a secret in the **new** repository.
+    * Go to **Settings / Secrets and variables / Actions**.
+    * Create a new repository secret: **Name:** `PAT_TOKEN`, **Secret:** *\[Your Token]*
 
-- [Advent of Code](https://adventofcode.com/{year}/about)
+#### B. 🛡️ Codacy Project Token
+
+Required to send code coverage reports.
+
+1.  **Get the Codacy Token:**
+    * Go to [Codacy](https://app.codacy.com) and **add your new repository**.
+    * Open **Settings / Coverage** and **copy** the `CODACY_PROJECT_TOKEN` value.
+2.  **Add the Secret (x2):** You need to add the token in **two** locations.
+    * **Actions:** Go to **Settings / Secrets and variables / Actions**.
+        * Create a new secret: **Name:** `CODACY_PROJECT_TOKEN`, **Secret:** *\[Codacy Token]*
+    * **Dependabot:** Go to **Settings / Secrets and variables / Dependabot secrets**.
+        * Create a new secret: **Name:** `CODACY_PROJECT_TOKEN`, **Secret:** *\[Codacy Token]*
+
+> 💡 **Note:** Setting the secret for Dependabot is crucial to prevent automated Pull Requests from failing the coverage report job.
+
+### 📅 3. Year Update and Permissions
+
+1.  **Configure Workflow Permissions:**
+    * Go to **Settings / Actions / General**.
+    * Under **Workflow permissions**, enable:
+        * **Read and write permissions**.
+        * **Allow GitHub Actions to create and approve pull requests**.
+2.  **Run "Update year" Workflow:**
+    * Go to the **Actions** tab and open the **Update year** workflow.
+    * Click **Run workflow**, type the **year** in `yyyy` format (e.g., `2025`), and **Run workflow**.
+3.  **Merge the Pull Request:**
+    * The workflow will automatically create a Pull Request.
+    * **Open it**, verify the year changes are correct, and **merge** it.
+
+> After merging, the repository description, topics, and all `README.md` and `pom.xml` files will be updated with the correct year.
+
+### 💾 4. Data Repository Setup
+
+To privately manage your input files for each day.
+
+1.  **Create Data Repository:**
+    * Create a **private** repository using the [advent-of-code-yyyy-data](https://github.com/Flashky/advent-of-code-yyyy-data) template.
+2.  **Add as a Submodule:**
+    * Clone your new repository locally and add the data repository as a submodule.
+
+    ```bash
+    # Ensure you are in the root directory of your new repository
+    git submodule add -b master [https://github.com/Flashky/advent-of-code-](https://github.com/Flashky/advent-of-code-){year}-data.git src/test/resources/inputs
+    git commit -m "feat: Add data repository submodule"
+    git push
+    ```
+
+### 🏆 5. Codacy Badges (Optional)
+
+1.  Go to [Codacy](https://app.codacy.com) and open your repository.
+2.  Open **Settings / General** and **copy** both the `code quality` and
