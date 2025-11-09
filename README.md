@@ -94,6 +94,7 @@ To privately manage your input files for each day.
 
 ---
 
+<a name="maintenance-tasks"></a>
 ## 🛠️ Maintenance Tasks
 
 > These steps should only be performed on the original **template repository**, *not* on the current year's copy.
