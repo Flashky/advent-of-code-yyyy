@@ -8,8 +8,6 @@ This guide will help you quickly configure a new repository from this template f
 >
 > **Before starting the setup:** Ensure the **[Maintenance Tasks](#maintenance-tasks)** section is completed on the **template repository**. This guarantees all dependencies and tokens are up-to-date.
 
----
-
 ### 🚀 1. New Repository Creation
 
 1.  Open the main page of the [template repository](https://github.com/Flashky/advent-of-code-yyyy).
