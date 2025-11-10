@@ -19,16 +19,14 @@ public class Vector2 {
 		this.y = anotherVector.y;
 	}
 	
-	/**
-	 * Accepts coordinates in String format as "x,y" and creates a Vector2 from it.
-	 * <pre>
-	 * Vector2 vector1 = new Vector2("4,2");
-	 * Vector2 vector2 = new Vector2(4,2);
-	 * 
-	 * vector1.equals(vector2) // true
-	 * </pre>
-	 * @param coordinates the coordinates of the vector
-	 */
+	/// Accepts coordinates in String format as "x,y" and creates a Vector2 from it.
+    /// ```
+    /// Vector2 vector1 = new Vector2("4,2");
+    /// Vector2 vector2 = new Vector2(4,2);
+    /// 
+    /// vector1.equals(vector2) // true
+    /// ```
+    /// @param coordinates the coordinates of the vector
 	public Vector2(String coordinates) {
 		
 		String[] values = coordinates.split(",");
@@ -73,22 +71,20 @@ public class Vector2 {
 		return new Vector2(vector.x * scalar, vector.y * scalar);
 	}
 
-	/**
-	 * Substracts the right operand vector to the left operand vector, applying absolute value to the result.
-	 *  
-	 * <p>
-	 * Examples <code>(x,y)</code>:
-	 * </p>
-	 * <pre>
-	 * |(0,14) - (0,7)| = |(0,7)| 	= <b>(0,7)</b>
-	 * |(0,7) - (0,14)| = |(0,-7)| 	= <b>(0,7)</b>
-	 * |(11,0) - (5,0)| = |(6,0)| 	= <b>(6,0)</b>
-	 * |(5,0) - (11,0)| = |(-6,0)| 	= <b>(6,0)</b>
-	 * </code>
-	 *  
-	 * </p>
-	 * @param other substracting Vector2.
-	 */
+	/// Substracts the right operand vector to the left operand vector, applying absolute value to the result.
+    /// 
+    /// 
+    /// Examples `(x,y)`:
+    /// 
+    /// ```
+    /// |(0,14) - (0,7)| = |(0,7)| 	= **(0,7)**
+    /// |(0,7) - (0,14)| = |(0,-7)| 	= **(0,7)**
+    /// |(11,0) - (5,0)| = |(6,0)| 	= **(6,0)**
+    /// |(5,0) - (11,0)| = |(-6,0)| 	= **(6,0)**
+    /// ```
+    /// 
+    /// 
+    /// @param other substracting Vector2.
 	public void substractAbs(Vector2 other) {
 		
 		this.x = Math.abs(this.x - other.x);
@@ -96,12 +92,10 @@ public class Vector2 {
 		
 	}
 	
-	/**
-	 * Modifies this vector to have a magnitude of 1.
-	 * 
-	 * <p>This function <strong>will modify</strong> the current vector.
-	 * Use {@link #normalized()} if you want to keep current vector unchanged.<p>
-	 */
+	/// Modifies this vector to have a magnitude of 1.
+    /// 
+    /// This function **will modify** the current vector.
+    /// Use [#normalized()] if you want to keep current vector unchanged.
 	public void normalize() {
 		
 		double length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -123,14 +117,12 @@ public class Vector2 {
 				
 	}
 	
-	/**
-	 * Returns a copy of this vector with a magnitude of 1.
-	 * <p>
-	 * This function <strong>will NOT modify</strong> the current vector.
-	 * Use {@link #normalize()} if you want to modify the current vector.
-	 * </p>
-	 * @return a normalized version of the current vector.
-	 */
+	/// Returns a copy of this vector with a magnitude of 1.
+    /// 
+    /// This function **will NOT modify** the current vector.
+    /// Use [#normalize()] if you want to modify the current vector.
+    /// 
+    /// @return a normalized version of the current vector.
 	public Vector2 normalized() {
 		
 		double length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -153,9 +145,7 @@ public class Vector2 {
 		return new Vector2(newX, newY);
 	}
 	
-	/**
-	 * Rotates the Vector2 90º clockwise.
-	 */
+	/// Rotates the Vector2 90º clockwise.
 	public void rotateRight() {
 		
 		//https://limnu.com/sketch-easy-90-degree-rotate-vectors/
@@ -164,9 +154,7 @@ public class Vector2 {
 		this.y = newY;
 	}
 	
-	/**
-	 * Rotates the Vector2 90º counter-clockwise.
-	 */
+	/// Rotates the Vector2 90º counter-clockwise.
 	public void rotateLeft() {
 		int newX = -this.y;
 		this.y = this.x;
@@ -176,24 +164,22 @@ public class Vector2 {
 	
 	// Static operations
 	
-	/**
-	 * Substracts the right operand vector to the left operand vector, applying absolute value to the result.
-	 *  
-	 * <p>
-	 * Examples <code>(x,y)</code>:
-	 * </p>
-	 * <pre>
-	 * |(0,14) - (0,7)| = |(0,7)| 	= <b>(0,7)</b>
-	 * |(0,7) - (0,14)| = |(0,-7)| 	= <b>(0,7)</b>
-	 * |(11,0) - (5,0)| = |(6,0)| 	= <b>(6,0)</b>
-	 * |(5,0) - (11,0)| = |(-6,0)| 	= <b>(6,0)</b>
-	 * </code>
-	 *  
-	 * </p>
-	 * @param leftOperand Vector2 to substract from.
-	 * @param rightOperand substracting Vector2.
-	 * @return a new Vector2
-	 */
+	/// Substracts the right operand vector to the left operand vector, applying absolute value to the result.
+    /// 
+    /// 
+    /// Examples `(x,y)`:
+    /// 
+    /// ```
+    /// |(0,14) - (0,7)| = |(0,7)| 	= **(0,7)**
+    /// |(0,7) - (0,14)| = |(0,-7)| 	= **(0,7)**
+    /// |(11,0) - (5,0)| = |(6,0)| 	= **(6,0)**
+    /// |(5,0) - (11,0)| = |(-6,0)| 	= **(6,0)**
+    /// ```
+    /// 
+    /// 
+    /// @param leftOperand Vector2 to substract from.
+    /// @param rightOperand substracting Vector2.
+    /// @return a new Vector2
 	public static Vector2 substractAbs(Vector2 leftOperand, Vector2 rightOperand) {
 		
 		int x = Math.abs(leftOperand.x - rightOperand.x);
@@ -203,35 +189,31 @@ public class Vector2 {
 		
 	}
 	
-	/**
-	 * Substracts the right operand vector to the left operand vector.
-	 * <p>
-	 * Examples <code>(x,y)</code>:
-	 * </p>
-	 * <pre>
-	 * (0,14) - (0,7) = <b>(0,7)</b>
-	 * (0,7) - (0,14) = <b>(0,-7)</b>
-	 * (11,0) - (5,0) = <b>(6,0)</b>
-	 * (5,0) - (11,0) = <b>(-6,0)</b>
-	 * </code>
-	 *  
-	 * </p>
-	 * @param leftOperand Vector2 to substract from.
-	 * @param rightOperand substracting Vector2.
-	 * @return a new Vector2
-	 */
+	/// Substracts the right operand vector to the left operand vector.
+    /// 
+    /// Examples `(x,y)`:
+    /// 
+    /// ```
+    /// (0,14) - (0,7) = **(0,7)**
+    /// (0,7) - (0,14) = **(0,-7)**
+    /// (11,0) - (5,0) = **(6,0)**
+    /// (5,0) - (11,0) = **(-6,0)**
+    /// ```
+    /// 
+    /// 
+    /// @param leftOperand Vector2 to substract from.
+    /// @param rightOperand substracting Vector2.
+    /// @return a new Vector2
 	public static Vector2 substract(Vector2 leftOperand, Vector2 rightOperand) {
 		int x = leftOperand.x - rightOperand.x;
 		int y = leftOperand.y - rightOperand.y;
 		return new Vector2(x,y);
 	}
 
-	/**
-	 * Calculates the direction vector between points p and q.
-	 * @param p the initial point as a Vector2
-	 * @param q the destination point as a Vector2
-	 * @return a direction Vector2
-	 */
+	/// Calculates the direction vector between points p and q.
+    /// @param p the initial point as a Vector2
+    /// @param q the destination point as a Vector2
+    /// @return a direction Vector2
 	public static Vector2 direction(Vector2 p, Vector2 q) {
 
 		// Given (px,py) and (qx,qy):
@@ -240,10 +222,8 @@ public class Vector2 {
 		return Vector2.substract(p, q);
 	}
 
-	/**
-	 * Shorthand for <code>Vector2(1,0)</code>.
-	 * @return A unitary vector that points to the right.
-	 */
+	/// Shorthand for `Vector2(1,0)`.
+    /// @return A unitary vector that points to the right.
 	public static Vector2 right() {
 		return new Vector2(1,0);
 	}
@@ -266,58 +246,44 @@ public class Vector2 {
 		return xDistance + yDistance;
 	}
 	
-	/**
-	 * Shorthand for <code>Vector2(-1,0)</code>.
-	 * @return A unitary vector that points to the left.
-	 */
+	/// Shorthand for `Vector2(-1,0)`.
+    /// @return A unitary vector that points to the left.
 	public static Vector2 left() {
 		return new Vector2(-1,0);
 	}
 	
-	/**
-	 * Shorthand for <code>Vector2(0,1)</code>.
-	 * @return A unitary vector that points up.
-	 */
+	/// Shorthand for `Vector2(0,1)`.
+    /// @return A unitary vector that points up.
 	public static Vector2 up() {
 		return new Vector2(0,1);
 	}
 	
-	/**
-	 * Shorthand for <code>Vector2(0,-1)</code>.
-	 * @return A unitary vector that points down.
-	 */
+	/// Shorthand for `Vector2(0,-1)`.
+    /// @return A unitary vector that points down.
 	public static Vector2 down() {
 		return new Vector2(0,-1);
 	}
 
-	/**
-	 * Shorthand for <code>Vector2(1,1)</code>.
-	 * @return A unitary vector that points to the up right diagonal.
-	 */
+	/// Shorthand for `Vector2(1,1)`.
+    /// @return A unitary vector that points to the up right diagonal.
 	public static Vector2 upRight() {
 		return new Vector2(1,1);
 	}
 
-	/**
-	 * Shorthand for <code>Vector2(-1,1)</code>.
-	 * @return A unitary vector that points to the up left diagonal.
-	 */
+	/// Shorthand for `Vector2(-1,1)`.
+    /// @return A unitary vector that points to the up left diagonal.
 	public static Vector2 upLeft() {
 		return new Vector2(-1,1);
 	}
 
-	/**
-	 * Shorthand for <code>Vector2(1,-1)</code>.
-	 * @return A unitary vector that points to the down right diagonal.
-	 */
+	/// Shorthand for `Vector2(1,-1)`.
+    /// @return A unitary vector that points to the down right diagonal.
 	public static Vector2 downRight() {
 		return new Vector2(1,-1);
 	}
 
-	/**
-	 * Shorthand for <code>Vector2(-1,-1)</code>.
-	 * @return A unitary vector that points to the down left diagonal.
-	 */
+	/// Shorthand for `Vector2(-1,-1)`.
+    /// @return A unitary vector that points to the down left diagonal.
 	public static Vector2 downLeft() {
 		return new Vector2(-1,-1);
 	}
