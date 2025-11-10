@@ -64,7 +64,15 @@ public class Vector2 {
 		
 		return new Vector2(x,y);
 	}
-	
+
+	/// Multiplies the given vector by a scalar, returning a new Vector2.
+	/// @param vector the vector to multiply
+	/// @param scalar the scalar value to multiply the vector by
+	/// @return a new Vector2 with the result of the scalar product.
+	public static Vector2 multiply(Vector2 vector, int scalar) {
+		return new Vector2(vector.x * scalar, vector.y * scalar);
+	}
+
 	/**
 	 * Substracts the right operand vector to the left operand vector, applying absolute value to the result.
 	 *  

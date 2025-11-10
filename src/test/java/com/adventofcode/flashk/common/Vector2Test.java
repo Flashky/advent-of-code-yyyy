@@ -753,4 +753,20 @@ class Vector2Test {
 		assertThrows(IllegalStateException.class, vector::normalized);
 
 	}
+
+	@Test
+	void multiply() {
+
+		Vector2 vector = new Vector2(2, 3);
+		Vector2 result = Vector2.multiply(vector, 5);
+
+		// The result is a new vector with the product of the vector by the scalar
+		assertNotSame(vector, result);
+		assertEquals(10, result.getX());
+		assertEquals(15, result.getY());
+
+		// Original vector is not modified
+		assertEquals(2, vector.getX());
+		assertEquals(3, vector.getY());
+	}
 }
