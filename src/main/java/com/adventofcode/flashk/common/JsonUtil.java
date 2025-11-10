@@ -27,7 +27,7 @@ public final class JsonUtil {
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.readTree(input);
-		} catch (JsonProcessingException e) {
+		} catch (JsonProcessingException _) {
 			throw new IllegalArgumentException("The file "+input+" has wrong format.");
 		}
 	}
