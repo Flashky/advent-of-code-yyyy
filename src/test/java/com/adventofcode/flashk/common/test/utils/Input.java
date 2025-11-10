@@ -8,10 +8,8 @@ import java.util.ArrayList;
 import module java.base;
 import java.util.stream.Collectors;
 
-/**
- * Helper class for reading Advent of Code input files.
- * <p></p>All input files are expected to be located under <code>src/test/resources/inputs</code> path.</p>
- */
+/// Helper class for reading Advent of Code input files.
+/// All input files are expected to be located under `src/test/resources/inputs` path.
 public final class Input {
 
 	private static final String PATH_INPUTS = "src/test/resources/inputs";
@@ -50,12 +48,10 @@ public final class Input {
 		return input;
 	}
 
-	/**
-	 * Reads an input file into a bidimensional char array.
-	 * @param inputFolder the folder where the input file is located.
-	 * @param inputFile the file to be read.
-	 * @return a bidimensional array of characters.
-	 */
+	/// Reads an input file into a bidimensional char array.
+    /// @param inputFolder the folder where the input file is located.
+    /// @param inputFile the file to be read.
+    /// @return a bidimensional array of characters.
 	public static char[][] read2DCharArray(String inputFolder, String inputFile) {
 		List<String> inputs = readStringLines(inputFolder,inputFile);
 
@@ -71,12 +67,10 @@ public final class Input {
 		return char2D;
 	}
 
-	/**
-	 * Reads an input file into a bidimensional int array.
-	 * @param inputFolder the folder where the input file is located.
-	 * @param inputFile the file to be read.
-	 * @return a bidimensional array of integers.
-	 */
+	/// Reads an input file into a bidimensional int array.
+    /// @param inputFolder the folder where the input file is located.
+    /// @param inputFile the file to be read.
+    /// @return a bidimensional array of integers.
 	public static int[][] read2DIntArray(String inputFolder, String inputFile) {
 		List<String> inputs = readStringLines(inputFolder,inputFile);
 
