@@ -74,7 +74,8 @@ To privately manage your input files for each day.
 ```bash
 git clone https://github.com/Flashky/advent-of-code-{year}.git &&
 cd advent-of-code-{year} &&
-git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs && 
+git submodule add -b master https://github.com/Flashky/advent-of-code-{year}-data.git src/test/resources/inputs &&
+git commit -m "test: add data repository as submodule" &&
 git push
 ```
 
