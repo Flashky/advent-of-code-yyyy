@@ -18,34 +18,29 @@ This guide will help you quickly configure a new repository from this template f
 
 ### 🔑 2. Tokens and Secrets Configuration
 
-You need to set up two tokens: the **GitHub** token (`PAT_TOKEN`) and the **Codacy** token (`CODACY_PROJECT_TOKEN`).
+You need to set up two tokens: a **GitHub Personal Access Token** (`PAT_TOKEN`) and the **Codacy** token (`CODACY_PROJECT_TOKEN`).
+Both tokens must be added to **Actions** and **Dependabot** secrets in order to GitHub Actions and Dependabot to function correctly.
 
-#### A. 🐙 Personal Access Token (PAT)
+#### A. 🔐 Personal Access Token (PAT)
 
-The `PAT_TOKEN` is necessary for GitHub Actions (like Dependabot and year update) to function correctly.
+The `PAT_TOKEN` is required for **GitHub Actions** and **Dependabot** to function properly:
 
 1.  **Verify/Create the PAT:**
     * Go to **[Personal access tokens (classic)](https://github.com/settings/tokens)**.
     * If you don't have a token named `PAT_TOKEN` (or similar), click **Generate New Token**, select the `repo` scope, and **copy the generated token**.
     * If an existing `PAT_TOKEN` is close to expiring, click on it, select **regenerate the token**, and **copy the new value**.
-2.  **Add the PAT to the new repository:**
-    * Go to **Settings / Secrets and variables / Actions**.
-    * Create a new repository secret: **Name:** `PAT_TOKEN`, **Secret:** *\[Your Token]*
+2.  Go to **Settings / Secrets and variables**.
+3.  Add the Secret under the name `PAT_TOKEN` both at **Actions** and **Dependabot secrets**.
 
 #### B. 🛡️ Codacy Project Token
 
-Required to send code coverage reports.
+The `CODACY_PROJECT_TOKEN` is required to send code coverage reports to Codacy:
 
 1.  **Get the Codacy Token:**
     * Go to [Codacy](https://app.codacy.com) and **add your new repository**.
     * Open **Settings / Coverage** and **copy** the `CODACY_PROJECT_TOKEN` value.
-2.  **Add the Secret (x2):** You need to add the token in **two** locations.
-    * **Actions:** Go to **Settings / Secrets and variables / Actions**.
-        * Create a new secret: **Name:** `CODACY_PROJECT_TOKEN`, **Secret:** *\[Codacy Token]*
-    * **Dependabot:** Go to **Settings / Secrets and variables / Dependabot secrets**.
-        * Create a new secret: **Name:** `CODACY_PROJECT_TOKEN`, **Secret:** *\[Codacy Token]*
-
-> 💡 **Note:** Setting the secret for Dependabot is crucial to prevent automated Pull Requests from failing the coverage report job.
+2.  Go to **Settings / Secrets and variables**.
+3.  Add the Secret under the name `CODACY_PROJECT_TOKEN` both at **Actions** and **Dependabot secrets**.
 
 ### 📅 3. Year Update
 
