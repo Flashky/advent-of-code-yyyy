@@ -95,7 +95,7 @@ jobs:
       uses: peter-evans/create-pull-request@v7
       id: pull-request
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT_TOKEN }}
         commit-message: "Update year to ${{ github.event.inputs.aoc_year }}"
         title: "Update year to ${{ github.event.inputs.aoc_year }}"
         body: |
