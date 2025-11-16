@@ -54,18 +54,20 @@ jobs:
     - name: Update Repository Description
       env:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-      run: gh repo edit -d "Advent of Code ${{ github.event.inputs.aoc_year }}"
+        AOC_YEAR: ${{ github.event.inputs.aoc_year }}
+      run: gh repo edit -d "Advent of Code $AOC_YEAR"
 
       # Update repository topics
     - name: Update Repository Topics
       env:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        AOC_YEAR: ${{ github.event.inputs.aoc_year }}
       run: |
         gh repo edit \
           --add-topic "java" \
           --add-topic "advent-of-code" \
-          --add-topic "advent-of-code-${{ github.event.inputs.aoc_year }}" \
-          --add-topic "advent-of-code-${{ github.event.inputs.aoc_year }}-java" \
+          --add-topic "advent-of-code-$AOC_YEAR" \
+          --add-topic "advent-of-code-$AOC_YEAR-java" \
           --add-topic "advent-of-code-flashky"
 
     # Clean up folders and README if AoC event is 2025 or newer.
