@@ -16,7 +16,7 @@ This guide will help you quickly configure a new repository from this template f
 2.  Click **Use this template** and then **Create a new repository**.
 3.  Name the new repository (e.g., `advent-of-code-202X`).
 
-### 🔑 2. Token and Secret Configuration
+### 🔑 2. Tokens and Secrets Configuration
 
 You need to set up two tokens: the **GitHub** token (`PAT_TOKEN`) and the **Codacy** token (`CODACY_PROJECT_TOKEN`).
 
@@ -47,17 +47,12 @@ Required to send code coverage reports.
 
 > 💡 **Note:** Setting the secret for Dependabot is crucial to prevent automated Pull Requests from failing the coverage report job.
 
-### 📅 3. Year Update and Permissions
+### 📅 3. Year Update
 
-1.  **Configure Workflow Permissions:**
-    * Go to **Settings / Actions / General**.
-    * Under **Workflow permissions**, enable:
-        * **Read and write permissions**.
-        * **Allow GitHub Actions to create and approve pull requests**.
-2.  **Run "Update year" Workflow:**
+1.  **Run "Update year" Workflow:**
     * Go to the **Actions** tab and open the **Update year** workflow.
     * Click **Run workflow**, type the **year** in `yyyy` format (e.g., `2025`), and **Run workflow**.
-3.  **Merge the Pull Request:**
+2.  **Merge the Pull Request:**
     * The workflow will automatically create a Pull Request.
     * **Open it**, verify the year changes are correct, and **merge** it.
 
