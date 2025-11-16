@@ -39,10 +39,10 @@ jobs:
       # Verify for a valid year input
       - name: Check Year Format
         run: |
-          if echo "$AOC_YEAR" | grep -E -q '^[0-9]{4}$'; then
-            echo "Year '$AOC_YEAR' format is valid."
+          if echo "${{ env.AOC_YEAR }}" | grep -E -q '^[0-9]{4}$'; then
+            echo "Year '${{ env.AOC_YEAR }}' format is valid."
           else
-            echo -e "\e[91mError: Invalid year format ('$AOC_YEAR'). Please provide a valid 4-digit year.\e[0m"
+            echo -e "\e[91mError: Invalid year format ('${{ env.AOC_YEAR }}'). Please provide a valid 4-digit year.\e[0m"
             exit 1
           fi
           
@@ -56,7 +56,7 @@ jobs:
     - name: Update Repository Description
       env:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-      run: gh repo edit -d "Advent of Code {{ env.$AOC_YEAR }}"
+      run: gh repo edit -d "Advent of Code ${{ env.AOC_YEAR }}"
 
       # Update repository topics
     - name: Update Repository Topics
@@ -66,15 +66,15 @@ jobs:
         gh repo edit \
           --add-topic "java" \
           --add-topic "advent-of-code" \
-          --add-topic "advent-of-code-{{ env.$AOC_YEAR }}" \
-          --add-topic "advent-of-code-{{ env.$AOC_YEAR }}-java" \
+          --add-topic "advent-of-code-${{ env.AOC_YEAR }}" \
+          --add-topic "advent-of-code-${{ env.AOC_YEAR }}-java" \
           --add-topic "advent-of-code-flashky"
 
     # Clean up folders and README if AoC event is 2025 or newer.
     - name: Clean Up (2025+)
       if: ${{ env.AOC_YEAR >= 2025 }}
       run: |
-        echo "Year $AOC_YEAR is 2025 or greater. Performing cleanup..."
+        echo "Year ${{ env.AOC_YEAR }} is 2025 or greater. Performing cleanup..."
 
         echo "Removing day13-day25 source and test folders."
         rm -rf src/{main,test}/java/com/adventofcode/flashk/day{13..25}
@@ -85,12 +85,12 @@ jobs:
     # Update README.md
     - name: Update README.md
       run: |
-        find . -name 'README.md' | xargs sed -i 's/{year}/'{{ env.$AOC_YEAR }}'/g'
+        find . -name 'README.md' | xargs sed -i 's/{year}/'${{ env.AOC_YEAR }}'/g'
 
     # Update pom.xml
     - name: Update pom.xml
       run: |
-        find . -name 'pom.xml' | xargs sed -i 's/yyyy/'{{ env.$AOC_YEAR }}'/g'
+        find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ env.AOC_YEAR }}'/g'
 
     # Open Pull Request
     - name: Open Pull Request
