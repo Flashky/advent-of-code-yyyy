@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
         run: |
           if [ "${{ secrets.CODACY_PROJECT_TOKEN }}" == '' ]; then
-            echo "::warning title=Missing CODACY_PROJECT_TOKEN::Report will be skipped."
+            echo "::warning title=Missing CODACY_PROJECT_TOKEN::Codacy coverage report job will be skipped."
             echo "skip_status=true" >> $GITHUB_OUTPUT
             exit 1 
           fi
