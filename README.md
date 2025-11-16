@@ -21,7 +21,7 @@ This guide will help you quickly configure a new repository from this template f
 You need to set up two tokens: the **GitHub** token (`PAT_TOKEN`) and the **Codacy** token (`CODACY_PROJECT_TOKEN`).
 Both tokens must be added to **Actions** and **Dependabot** secrets.
 
-#### A. 🐙 Personal Access Token (PAT)
+#### A. 🔐 Personal Access Token (PAT)
 
 The `PAT_TOKEN` is necessary for GitHub Actions (like Dependabot and year update) to function correctly.
 
