@@ -1,4 +1,6 @@
 name: Update year
+env:
+  AOC_YEAR: ${{ github.event.inputs.aoc_year }}
 on:
   workflow_dispatch:
     inputs:
@@ -36,8 +38,6 @@ jobs:
 
       # Verify for a valid year input
       - name: Check Year Format
-        env:
-          AOC_YEAR: ${{ github.event.inputs.aoc_year }}
         run: |
           if echo "$AOC_YEAR" | grep -E -q '^[0-9]{4}$'; then
             echo "Year '$AOC_YEAR' format is valid."
@@ -56,14 +56,12 @@ jobs:
     - name: Update Repository Description
       env:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        AOC_YEAR: ${{ github.event.inputs.aoc_year }}
       run: gh repo edit -d "Advent of Code $AOC_YEAR"
 
       # Update repository topics
     - name: Update Repository Topics
       env:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        AOC_YEAR: ${{ github.event.inputs.aoc_year }}
       run: |
         gh repo edit \
           --add-topic "java" \
@@ -74,7 +72,7 @@ jobs:
 
     # Clean up folders and README if AoC event is 2025 or newer.
     - name: Clean Up (2025+)
-      if: ${{ github.event.inputs.aoc_year >= 2025 }}
+      if: ${{ AOC_YEAR >= 2025 }}
       run: |
         echo "Year $AOC_YEAR is 2025 or greater. Performing cleanup..."
 
