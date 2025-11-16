@@ -50,24 +50,23 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
-    # Update repository description
-    - name: Update Repository Description  
-      run: |
-        token="${{ secrets.PAT_TOKEN }}"    
-        url=https://api.github.com/repos/${{ github.repository }}
-        description='{"description": "Advent of Code ${{ github.event.inputs.aoc_year }}"}'
-        curl -X PATCH -H "Authorization: Bearer $token" -H "Accept: application/vnd.github.v3+json" -d "$description" $url
+      # Update repository description
+    - name: Update Repository Description
+      env:
+        GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+      run: gh repo edit -d "Advent of Code ${{ github.event.inputs.aoc_year }}"
 
-    # Update repository topics
+      # Update repository topics
     - name: Update Repository Topics
+      env:
+        GH_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
-        token="${{ secrets.PAT_TOKEN }}"
-        url="https://api.github.com/repos/${{ github.repository }}/topics"
-        topics='{"names": ["java", "advent-of-code",
-                            "advent-of-code-${{ github.event.inputs.aoc_year }}",
-                            "advent-of-code-${{ github.event.inputs.aoc_year }}-java",
-                            "advent-of-code-flashky"]}'
-        curl -X PUT -H "Authorization: Bearer $token" -H "Accept: application/vnd.github.mercy-preview+json" -d "$topics" $url
+        gh repo edit \
+          --add-topic "java" \
+          --add-topic "advent-of-code" \
+          --add-topic "advent-of-code-${{ github.event.inputs.aoc_year }}" \
+          --add-topic "advent-of-code-${{ github.event.inputs.aoc_year }}-java" \
+          --add-topic "advent-of-code-flashky"
 
     # Clean up folders and README if AoC event is 2025 or newer.
     - name: Clean Up (2025+)
