@@ -140,5 +140,3 @@ git clone https://github.com/Flashky/advent-of-code-{year}.git --recurse-submodu
 ## About
 
 - [Advent of Code](https://adventofcode.com/{year}/about)
-
-
