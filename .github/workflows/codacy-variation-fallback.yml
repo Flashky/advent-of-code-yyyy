@@ -31,18 +31,17 @@ jobs:
         id: changes
         with:
           filters: | 
-            relevant_files:
-              # Files processed by Codacy Coverage Variation
-              - "src/main/**"
+            has_code_changes:
+              - "src/main/**/*.java"
               # Excluded files from Codacy Coverage Variation
-              - "!**/*.md"
-              - "!**/*.yml"
-              - "!.codacy.yml"
-              - "!.github/**"
+            has_non_coverable_changes:
+              - "**/*.md"
+              - "**/*.yml"
+              - ".github/**"
             
-      # Bypass the 'Codacy Coverage Variation' when there are no relevant files able to trigger it.
+      # Bypass the 'Codacy Coverage Variation' when there are no coverable files able to trigger it.
       - name: Create Success Check for Variation
-        if: steps.changes.outputs.relevant_files == 'false'
+        if: steps.changes.outputs.has_code_changes == 'false' && steps.changes.outputs.has_non_coverable_changes == 'true'
         uses: actions/github-script@v7
         with:
           script: |
