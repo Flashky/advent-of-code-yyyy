@@ -33,27 +33,22 @@ jobs:
         run: |
           FILE_NAME=".codacy.yml"
           
-          # --- 1. EXTRACCIÓN Y DEFINICIÓN DE RUTAS ---
-          
-          # 1. Rutas dinámicas (yq)
+          # 1. Rutas dinámicas
           EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
           
-          # 2. Definimos las rutas estáticas de control (¡USANDO /* * / * PARA MÁXIMA EXCLUSIÓN!)
+          # 2. Rutas estáticas (¡Usando /* * / * y el nombre correcto del fichero!)
           STATIC_IGNORES=".github/**/*"$'\n'"$FILE_NAME" 
           
-          # 3. Concatenamos todas las rutas
+          # 3. Concatenamos
           ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
           
           if [ ! -f "$FILE_NAME" ]; then
             echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
           fi
 
-          # --- 2. GENERACIÓN DEL FORMATO YAML ---
-
-          # 4. Inicializamos la lista: Inclusión Global y de Carpetas Ocultas
+          # 4. Inicializamos la lista de salida: Inclusión solo de lo Visible
           FORMATTED_LIST="relevant_files:"$'\n'
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \".*/**\"" # Inclusión de dot directories
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # SOLO Incluir archivos y carpetas visibles (src/, build/, etc.)
           
           # 5. Iteramos sobre todas las rutas para añadir las exclusiones
           while IFS= read -r line; do
