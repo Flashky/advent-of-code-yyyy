@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  unblock_codacy_variation:
+  bypass_codacy_variation:
     runs-on: ubuntu-latest
     steps:
 
@@ -36,32 +36,23 @@ jobs:
           
           if [ ! -f "$FILE_NAME" ]; then
             echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
-            echo "filters=**" >> $GITHUB_OUTPUT
-            exit 0
           fi
 
           
           # Extract excluded paths and add the 'codacy.yml' file itself
-          EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME")
-          BASE_PATTERNS="**"$'\n'"!.github/**"$'\n'"!$FILE_NAME"
-          ALL_PATTERNS="$BASE_PATTERNS"$'\n'"$EXCLUDES"
-          
-          # Build a paths-filter pattern
-          PATTERNS="**"
+          EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
+          STATIC_IGNORES=".github/**"$'\n'"$FILE_NAME"
+          ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
+          FORMATTED_LIST="relevant_files:"$'\n'"- **"
           
           # Format the list
-          FORMATTED_LIST="relevant_files:"
           while IFS= read -r line; do
+            # Solo procesamos líneas que no estén vacías
             if [[ -n "$line" ]]; then
-               # Formatea la línea para la lista YAML: - "!patron"
-               PREFIX=""
-               # Añade '!' si no es el patrón inicial '**'
-               if [[ "$line" != "**" ]]; then
-                 PREFIX="!"
-               fi
-               FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- ${PREFIX}$line"
+              # Generamos la negación: "- !ruta"
+              FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- !${line}"
             fi
-          done <<< "$ALL_PATTERNS"
+          done <<< "$ALL_PATHS"
 
           # Save the result on a variable
           {
@@ -69,7 +60,7 @@ jobs:
             echo "$FORMATTED_LIST"
             echo 'EOF'
           } >> $GITHUB_OUTPUT
-
+          
           echo "Generated Filters (Final YAML Format):"
           echo "$FORMATTED_LIST"
           
