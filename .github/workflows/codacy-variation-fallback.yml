@@ -31,29 +31,44 @@ jobs:
       - name: Parse codacy.yml exclusions
         id: parse-codacy-exclusions
         run: |
-          
           FILE_NAME=".codacy.yml"
           
+          # --- 1. EXTRACCIÓN Y DEFINICIÓN DE RUTAS ---
+          
+          # Usamos 'yq' para extraer la lista de rutas excluidas (EXCLUDES)
+          # '2>/dev/null || true' evita que el workflow falle si la clave no existe.
+          EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
+          
+          # Definimos las rutas estáticas de control que siempre ignoramos.
+          STATIC_IGNORES=".github/**"$'\n'"$FILE_NAME" 
+          
+          # Concatenamos todas las rutas a una sola variable.
+          ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
+          
+          # Si el fichero no existe, avisamos
           if [ ! -f "$FILE_NAME" ]; then
             echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
           fi
 
-          
-          # Extract excluded paths and add the 'codacy.yml' file itself
-          FORMATTED_LIST="relevant_files:"$'\n'
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # 1. Incluir todo lo visible
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \".*/**\"" # 2. Incluir todo lo oculto (ej. .github, .vscode, .codacy.yml)
+          # --- 2. GENERACIÓN DEL FORMATO YAML ---
 
-          # Format the list
+          # Inicializamos la lista con las inclusiones obligatorias (para dotfiles/carpetas ocultas)
+          FORMATTED_LIST="relevant_files:"$'\n'
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # 1. Incluir visible
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \".*/**\"" # 2. Incluir oculto (SOLUCIÓN .github/)
+
+          # Iteramos sobre todas las rutas para añadir las exclusiones (negaciones)
+          # ALL_PATHS ahora sí contiene la lista de rutas dinámicas y estáticas.
           while IFS= read -r line; do
             if [[ -n "$line" ]]; then
-            # Generamos la negación: - "!ruta"
-            # Mantenemos las comillas dobles para evitar el error de alias
-            FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
-          fi
+              # Generamos la negación: - "!ruta"
+              FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
+            fi
           done <<< "$ALL_PATHS"
 
-          # Save the result on a variable
+          # --- 3. GUARDAR EL OUTPUT ---
+
+          # Guardamos el resultado en la variable
           {
             echo 'filters<<EOF'
             echo "$FORMATTED_LIST"
