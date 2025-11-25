@@ -32,15 +32,17 @@ jobs:
         id: parse-codacy-exclusions
         run: |
           
-          if [ ! -f codacy.yml ]; then
-            echo "No codacy.yml found, defaulting to basic ignores."
+          FILE_NAME=".codacy.yml"
+          
+          if [ ! -f "$FILE_NAME" ]; then
+            echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
             echo "filters=**" >> $GITHUB_OUTPUT
             exit 0
           fi
 
           # Extract excluded paths and add the 'codacy.yml' file itself
-          EXCLUDES=$(yq '.exclude_paths[]' codacy.yml)
-          STATIC_IGNORES=$'.github/**\ncodacy.yml'
+          EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME")
+          STATIC_IGNORES=$'.github/**\n.codacy.yml'
           
           
           # Build a paths-filter pattern
