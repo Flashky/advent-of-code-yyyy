@@ -55,6 +55,6 @@ jobs:
               conclusion: 'success',
               output: {
                 title: 'Skipped by Dynamic Exclusion',
-                summary: 'All modified files workflows or they are excluded by codacy.yml. Reported bypassed success check.'
+                summary: 'There are no coverable files. Bypass Codacy Coverage Variation success check.'
               }
             });
