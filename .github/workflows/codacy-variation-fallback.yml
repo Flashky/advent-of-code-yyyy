@@ -1,0 +1,103 @@
+name: Codacy Variation Fallback
+
+# This workflow injects a success check on 'Codacy Coverage Variation' when the check is not reported by Codacy,
+# so it can avoid bloking auto-merging on Pull Requests that has a check success requirement on it.
+
+# Examples where 'Codacy Coverage Variation' is not reported by Codacy:
+# - Modification on just a test class, and your test classes are ignored at 'codacy.yml'.
+# - Modification of 'README.md', which has no coverage.
+# - Modification of a GitHub Action workflow, which has no coverage.
+
+# In those cases, this workflow will bypass the 'Codacy Coverage Variation' check, allowing the PR to auto-merge.
+
+on:
+  pull_request:
+    branches: [ "master", "main" ]
+
+permissions:
+  checks: write
+  contents: read
+
+jobs:
+  unblock_codacy_variation:
+    runs-on: ubuntu-latest
+    steps:
+
+      # Checkout Code to obtain 'codacy.yml' configuration
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      # Parse 'codacy.yml' exclusions
+      - name: Parse codacy.yml exclusions
+        id: parse-codacy-exclusions
+        run: |
+          
+          if [ ! -f codacy.yml ]; then
+            echo "No codacy.yml found, defaulting to basic ignores."
+            echo "filters=**" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract excluded paths and add the 'codacy.yml' file itself
+          EXCLUDES=$(yq '.exclude_paths[]' codacy.yml)
+          STATIC_IGNORES=$'.github/**\ncodacy.yml'
+          
+          
+          # Build a paths-filter pattern
+          PATTERNS="**"
+          
+          # Prexies with '!' for every exclusion in the file.
+          add_bang() {
+            while IFS= read -r line; do
+              if [[ -n "$line" ]]; then
+                PATTERNS="$PATTERNS"$'\n'"!$line"
+              fi
+            done <<< "$1"
+          }
+
+          add_bang "$EXCLUDES"
+          add_bang "$STATIC_IGNORES"
+
+          # Save the result on a variable
+          {
+            echo 'filters<<EOF'
+            echo "$PATTERNS"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+          # Display the result for debugging
+          echo "Generated Filters:"
+          echo "$PATTERNS"
+          
+      # Verify if there are changes on relevant files
+      # relevant_files will be:
+      # - 'true' when there is at least one file that will trigger the 'Codacy Coverage Variation' check
+      # - will be false otherwise.
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            relevant_files:
+              ${{ steps.config.outputs.filters }}
+
+      # Bypass the 'Codacy Coverage Variation' when there are no relevant files able to trigger it.
+      - name: Create Success Check for Variation
+        if: steps.changes.outputs.relevant_files == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const checkName = 'Codacy Coverage Variation';
+            console.log(`Reporting manual success for: ${checkName}`);
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: checkName,
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: 'Skipped by Dynamic Exclusion',
+                summary: 'All modified files workflows or they are excluded by codacy.yml. Reported bypassed success check.'
+              }
+            });
