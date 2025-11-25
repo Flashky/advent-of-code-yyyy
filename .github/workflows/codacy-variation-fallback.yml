@@ -36,38 +36,35 @@ jobs:
           # --- 1. EXTRACCIÓN Y DEFINICIÓN DE RUTAS ---
           
           # 1. Rutas dinámicas (yq)
-          # Extrae las rutas del archivo .codacy.yml. Si falla o no encuentra la clave, queda vacío.
+          # Extrae las exclusiones definidas por el usuario en el YAML.
           EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
           
-          # 2. Definimos las rutas estáticas de control (¡USANDO LA BARRA INICIAL PARA FORZAR LA EXCLUSIÓN ABSOLUTA!)
-          STATIC_IGNORES="/.github/**/*"$'\n'"$FILE_NAME" 
+          # 2. Rutas estáticas esenciales
+          # Solo necesitamos excluir explícitamente el archivo de configuración, ya que
+          # todo lo demás (.github, tests, READMEs) queda fuera del patrón de inclusión "src/main/**".
+          STATIC_IGNORES="$FILE_NAME" 
           
-          # 3. Concatenamos todas las rutas
+          # 3. Concatenamos todas las rutas a ser negadas
           ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
           
-          # Verificación
-          if [ ! -f "$FILE_NAME" ]; then
-            echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
-          fi
+          # --- 2. GENERACIÓN DEL FORMATO YAML (NUEVA ESTRATEGIA) ---
 
-          # --- 2. GENERACIÓN DEL FORMATO YAML ---
-
-          # 4. Inicializamos la lista de salida: Inclusión Global solo de lo Visible
+          # 4. Inicializamos la lista de salida: INCLUSIÓN ÚNICA Y ESPECÍFICA
           FORMATTED_LIST="relevant_files:"$'\n'
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # Única regla de inclusión, no incluye dot directories
+          # Patrón de inclusión: Solo archivos dentro de src/main y sus subcarpetas.
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"src/main/**\"" 
           
-          # 5. Iteramos sobre todas las rutas para añadir las exclusiones (negaciones)
-          # Esto garantiza que las rutas de exclusión estén después de la inclusión.
+          # 5. Iteramos sobre todas las rutas para añadir las exclusiones
           while IFS= read -r line; do
             if [[ -n "$line" ]]; then
-              # Generamos la negación con comillas: - "!ruta"
+              # Generamos la negación (esto respeta si codacy.yml excluye algo dentro de src/main)
               FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
             fi
           done <<< "$ALL_PATHS"
 
           # --- 3. GUARDAR EL OUTPUT ---
 
-          # Guardamos el resultado final en la variable de salida
+          # Guardamos el resultado final
           {
             echo 'filters<<EOF'
             echo "$FORMATTED_LIST"
