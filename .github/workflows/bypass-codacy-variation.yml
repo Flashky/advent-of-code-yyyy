@@ -22,18 +22,16 @@ jobs:
   bypass_check:
     runs-on: ubuntu-latest
     steps:
-    
-      # Verify if there are changes on relevant files
-      # relevant_files will be:
-      # - 'true' when there is at least one file that will trigger the 'Codacy Coverage Variation' check
-      # - will be false otherwise.
-      - uses: dorny/paths-filter@v3
+
+      # Verifies which kind of files have changes.
+      # 'has_code_changes' will be true if any java source file is modified.
+      # 'has_non_coverable_changes' will be true if there is any Markdown, YAML file or any other kind of non coverable file.
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: changes
         with:
           filters: | 
             has_code_changes:
               - "src/main/**/*.java"
-              # Excluded files from Codacy Coverage Variation
             has_non_coverable_changes:
               - "**/*.md"
               - "**/*.yml"
@@ -42,7 +40,7 @@ jobs:
       # Bypass the 'Codacy Coverage Variation' when there are no coverable files able to trigger it.
       - name: Create Success Check for Variation
         if: steps.changes.outputs.has_code_changes == 'false' && steps.changes.outputs.has_non_coverable_changes == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const checkName = 'Codacy Coverage Variation';
