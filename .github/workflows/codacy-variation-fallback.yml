@@ -40,16 +40,17 @@ jobs:
 
           
           # Extract excluded paths and add the 'codacy.yml' file itself
-          EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
-          STATIC_IGNORES=".github/**"$'\n'"$FILE_NAME"
-          ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
-          FORMATTED_LIST="relevant_files:"$'\n'"- \"**\""
-          
+          FORMATTED_LIST="relevant_files:"$'\n'
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # 1. Incluir todo lo visible
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \".*/**\"" # 2. Incluir todo lo oculto (ej. .github, .vscode, .codacy.yml)
+
           # Format the list
           while IFS= read -r line; do
             if [[ -n "$line" ]]; then
-              FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
-            fi
+            # Generamos la negación: - "!ruta"
+            # Mantenemos las comillas dobles para evitar el error de alias
+            FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
+          fi
           done <<< "$ALL_PATHS"
 
           # Save the result on a variable
