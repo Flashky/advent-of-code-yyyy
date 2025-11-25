@@ -33,32 +33,41 @@ jobs:
         run: |
           FILE_NAME=".codacy.yml"
           
-          # 1. Rutas dinámicas
+          # --- 1. EXTRACCIÓN Y DEFINICIÓN DE RUTAS ---
+          
+          # 1. Rutas dinámicas (yq)
+          # Extrae las rutas del archivo .codacy.yml. Si falla o no encuentra la clave, queda vacío.
           EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
           
-          # 2. Rutas estáticas (¡Usando /* * / * y el nombre correcto del fichero!)
-          STATIC_IGNORES=".github/**/*"$'\n'"$FILE_NAME" 
+          # 2. Definimos las rutas estáticas de control (¡USANDO LA BARRA INICIAL PARA FORZAR LA EXCLUSIÓN ABSOLUTA!)
+          STATIC_IGNORES="/.github/**/*"$'\n'"$FILE_NAME" 
           
-          # 3. Concatenamos
+          # 3. Concatenamos todas las rutas
           ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
           
+          # Verificación
           if [ ! -f "$FILE_NAME" ]; then
             echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
           fi
 
-          # 4. Inicializamos la lista de salida: Inclusión solo de lo Visible
+          # --- 2. GENERACIÓN DEL FORMATO YAML ---
+
+          # 4. Inicializamos la lista de salida: Inclusión Global solo de lo Visible
           FORMATTED_LIST="relevant_files:"$'\n'
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # SOLO Incluir archivos y carpetas visibles (src/, build/, etc.)
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # Única regla de inclusión, no incluye dot directories
           
-          # 5. Iteramos sobre todas las rutas para añadir las exclusiones
+          # 5. Iteramos sobre todas las rutas para añadir las exclusiones (negaciones)
+          # Esto garantiza que las rutas de exclusión estén después de la inclusión.
           while IFS= read -r line; do
             if [[ -n "$line" ]]; then
-              # Generamos la negación: - "!ruta"
+              # Generamos la negación con comillas: - "!ruta"
               FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
             fi
           done <<< "$ALL_PATHS"
 
-          # 6. Guardamos el resultado en la variable
+          # --- 3. GUARDAR EL OUTPUT ---
+
+          # Guardamos el resultado final en la variable de salida
           {
             echo 'filters<<EOF'
             echo "$FORMATTED_LIST"
