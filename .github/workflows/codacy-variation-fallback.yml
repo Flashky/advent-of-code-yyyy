@@ -35,30 +35,27 @@ jobs:
           
           # --- 1. EXTRACCIÓN Y DEFINICIÓN DE RUTAS ---
           
-          # Usamos 'yq' para extraer la lista de rutas excluidas (EXCLUDES)
-          # '2>/dev/null || true' evita que el workflow falle si la clave no existe.
+          # 1. Rutas dinámicas (yq)
           EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
           
-          # Definimos las rutas estáticas de control que siempre ignoramos.
-          STATIC_IGNORES=".github/**"$'\n'"$FILE_NAME" 
+          # 2. Definimos las rutas estáticas de control (¡USANDO /* * / * PARA MÁXIMA EXCLUSIÓN!)
+          STATIC_IGNORES=".github/**/*"$'\n'"$FILE_NAME" 
           
-          # Concatenamos todas las rutas a una sola variable.
+          # 3. Concatenamos todas las rutas
           ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
           
-          # Si el fichero no existe, avisamos
           if [ ! -f "$FILE_NAME" ]; then
             echo "::warning::File $FILE_NAME not found. Basic ignored configuration file will be used."
           fi
 
           # --- 2. GENERACIÓN DEL FORMATO YAML ---
 
-          # Inicializamos la lista con las inclusiones obligatorias (para dotfiles/carpetas ocultas)
+          # 4. Inicializamos la lista: Inclusión Global y de Carpetas Ocultas
           FORMATTED_LIST="relevant_files:"$'\n'
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    # 1. Incluir visible
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \".*/**\"" # 2. Incluir oculto (SOLUCIÓN .github/)
-
-          # Iteramos sobre todas las rutas para añadir las exclusiones (negaciones)
-          # ALL_PATHS ahora sí contiene la lista de rutas dinámicas y estáticas.
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"**\""    
+          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \".*/**\"" # Inclusión de dot directories
+          
+          # 5. Iteramos sobre todas las rutas para añadir las exclusiones
           while IFS= read -r line; do
             if [[ -n "$line" ]]; then
               # Generamos la negación: - "!ruta"
@@ -66,9 +63,7 @@ jobs:
             fi
           done <<< "$ALL_PATHS"
 
-          # --- 3. GUARDAR EL OUTPUT ---
-
-          # Guardamos el resultado en la variable
+          # 6. Guardamos el resultado en la variable
           {
             echo 'filters<<EOF'
             echo "$FORMATTED_LIST"
