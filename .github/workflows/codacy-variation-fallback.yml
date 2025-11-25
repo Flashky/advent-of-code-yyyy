@@ -22,58 +22,7 @@ jobs:
   bypass_codacy_variation:
     runs-on: ubuntu-latest
     steps:
-
-      # Checkout Code to obtain 'codacy.yml' configuration
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      # Parse 'codacy.yml' exclusions
-      - name: Parse codacy.yml exclusions
-        id: parse-codacy-exclusions
-        run: |
-          FILE_NAME=".codacy.yml"
-          
-          # --- 1. EXTRACCIÓN Y DEFINICIÓN DE RUTAS ---
-          
-          # 1. Rutas dinámicas (yq)
-          # Extrae las exclusiones definidas por el usuario en el YAML.
-          EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
-          
-          # 2. Rutas estáticas esenciales
-          # Solo necesitamos excluir explícitamente el archivo de configuración, ya que
-          # todo lo demás (.github, tests, READMEs) queda fuera del patrón de inclusión "src/main/**".
-          STATIC_IGNORES="$FILE_NAME" 
-          
-          # 3. Concatenamos todas las rutas a ser negadas
-          ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
-          
-          # --- 2. GENERACIÓN DEL FORMATO YAML (NUEVA ESTRATEGIA) ---
-
-          # 4. Inicializamos la lista de salida: INCLUSIÓN ÚNICA Y ESPECÍFICA
-          FORMATTED_LIST="relevant_files:"$'\n'
-          # Patrón de inclusión: Solo archivos dentro de src/main y sus subcarpetas.
-          FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"src/main/**\"" 
-          
-          # 5. Iteramos sobre todas las rutas para añadir las exclusiones
-          while IFS= read -r line; do
-            if [[ -n "$line" ]]; then
-              # Generamos la negación (esto respeta si codacy.yml excluye algo dentro de src/main)
-              FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
-            fi
-          done <<< "$ALL_PATHS"
-
-          # --- 3. GUARDAR EL OUTPUT ---
-
-          # Guardamos el resultado final
-          {
-            echo 'filters<<EOF'
-            echo "$FORMATTED_LIST"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
-          
-          echo "Generated Filters (Final YAML Format):"
-          echo "$FORMATTED_LIST"
-          
+    
       # Verify if there are changes on relevant files
       # relevant_files will be:
       # - 'true' when there is at least one file that will trigger the 'Codacy Coverage Variation' check
@@ -81,9 +30,15 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
-          filters: |
-            ${{ steps.parse-codacy-exclusions.outputs.filters }}
-
+          filters: | 
+            relevant_files:
+              # Files processed by Codacy Coverage Variation
+              - "src/main/**"
+              # Excluded files from Codacy Coverage Variation
+              - "!**/*.md"
+              - "!**/*.yml"
+              - "!.codacy.yml"
+            
       # Bypass the 'Codacy Coverage Variation' when there are no relevant files able to trigger it.
       - name: Create Success Check for Variation
         if: steps.changes.outputs.relevant_files == 'false'
