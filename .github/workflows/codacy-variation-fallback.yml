@@ -40,36 +40,38 @@ jobs:
             exit 0
           fi
 
+          
           # Extract excluded paths and add the 'codacy.yml' file itself
           EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME")
-          STATIC_IGNORES=$'.github/**\n.codacy.yml'
-          
+          BASE_PATTERNS="**"$'\n'"!.github/**"$'\n'"!$FILE_NAME"
+          ALL_PATTERNS="$BASE_PATTERNS"$'\n'"$EXCLUDES"
           
           # Build a paths-filter pattern
           PATTERNS="**"
           
-          # Prexies with '!' for every exclusion in the file.
-          add_bang() {
-            while IFS= read -r line; do
-              if [[ -n "$line" ]]; then
-                PATTERNS="$PATTERNS"$'\n'"!$line"
-              fi
-            done <<< "$1"
-          }
-
-          add_bang "$EXCLUDES"
-          add_bang "$STATIC_IGNORES"
+          # Format the list
+          FORMATTED_LIST="relevant_files:"
+          while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+               # Formatea la línea para la lista YAML: - "!patron"
+               PREFIX=""
+               # Añade '!' si no es el patrón inicial '**'
+               if [[ "$line" != "**" ]]; then
+                 PREFIX="!"
+               fi
+               FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- ${PREFIX}$line"
+            fi
+          done <<< "$ALL_PATTERNS"
 
           # Save the result on a variable
           {
             echo 'filters<<EOF'
-            echo "$PATTERNS"
+            echo "$FORMATTED_LIST"
             echo 'EOF'
           } >> $GITHUB_OUTPUT
 
-          # Display the result for debugging
-          echo "Generated Filters:"
-          echo "$PATTERNS"
+          echo "Generated Filters (Final YAML Format):"
+          echo "$FORMATTED_LIST"
           
       # Verify if there are changes on relevant files
       # relevant_files will be:
@@ -78,9 +80,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
-          filters: |
-            relevant_files:
-              ${{ steps.config.outputs.filters }}
+          filters: ${{ steps.config.outputs.filters }}
 
       # Bypass the 'Codacy Coverage Variation' when there are no relevant files able to trigger it.
       - name: Create Success Check for Variation
