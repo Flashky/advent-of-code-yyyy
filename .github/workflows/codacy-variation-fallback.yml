@@ -43,14 +43,12 @@ jobs:
           EXCLUDES=$(yq '.exclude_paths[]' "$FILE_NAME" 2>/dev/null || true)
           STATIC_IGNORES=".github/**"$'\n'"$FILE_NAME"
           ALL_PATHS="$EXCLUDES"$'\n'"$STATIC_IGNORES"
-          FORMATTED_LIST="relevant_files:"$'\n'"- **"
+          FORMATTED_LIST="relevant_files:"$'\n'"- \"**\""
           
           # Format the list
           while IFS= read -r line; do
-            # Solo procesamos líneas que no estén vacías
             if [[ -n "$line" ]]; then
-              # Generamos la negación: "- !ruta"
-              FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- !${line}"
+              FORMATTED_LIST="$FORMATTED_LIST"$'\n'"- \"!${line}\""
             fi
           done <<< "$ALL_PATHS"
 
