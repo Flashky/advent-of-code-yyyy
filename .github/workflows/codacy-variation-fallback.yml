@@ -38,6 +38,7 @@ jobs:
               - "!**/*.md"
               - "!**/*.yml"
               - "!.codacy.yml"
+              - "!.github/**"
             
       # Bypass the 'Codacy Coverage Variation' when there are no relevant files able to trigger it.
       - name: Create Success Check for Variation
