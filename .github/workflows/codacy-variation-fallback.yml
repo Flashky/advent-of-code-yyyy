@@ -1,4 +1,4 @@
-name: Codacy Variation Fallback
+name: Bypass Codacy Coverage Variation
 
 # This workflow injects a success check on 'Codacy Coverage Variation' when the check is not reported by Codacy,
 # so it can avoid bloking auto-merging on Pull Requests that has a check success requirement on it.
@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  bypass_codacy_variation:
+  bypass_check:
     runs-on: ubuntu-latest
     steps:
     
