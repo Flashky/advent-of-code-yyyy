@@ -45,7 +45,7 @@ class PartitionsTest {
         List<String> result = Partitions.fromString("abcd", 4);
 
         assertEquals(1, result.size());
-        assertEquals("abcd", result.getFirst(0));
+        assertEquals("abcd", result.getFirst());
     }
 
 }
