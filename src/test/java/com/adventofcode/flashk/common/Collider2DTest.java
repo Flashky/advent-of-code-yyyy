@@ -134,4 +134,32 @@ class Collider2DTest {
         assertEquals(-1, rect.getMinX());
         assertEquals(1, rect.getMaxX());
     }
+
+    @Test
+    void testPointCollision() {
+        // Given a 2x2 square collider from (0,0) to (2,2)
+        Collider2D collider = new Collider2D(new Vector2(0, 0), new Vector2(2, 2));
+
+        // 1. Test point in the middle
+        assertTrue(collider.collidesWith(new Vector2(1, 1)), "Point in the center should collide");
+
+        // 2. Test points on the edges (inclusive)
+        assertTrue(collider.collidesWith(new Vector2(0, 0)), "Bottom-left corner should collide");
+        assertTrue(collider.collidesWith(new Vector2(2, 2)), "Top-right corner should collide");
+        assertTrue(collider.collidesWith(new Vector2(0, 1)), "Point on the left edge should collide");
+
+        // 3. Test points just outside
+        assertFalse(collider.collidesWith(new Vector2(-1, 0)), "Point to the left should not collide");
+        assertFalse(collider.collidesWith(new Vector2(1, 3)), "Point above should not collide");
+        assertFalse(collider.collidesWith(new Vector2(3, 1)), "Point to the right should not collide");
+    }
+
+    @Test
+    void testPointCollisionWithNegativeCoordinates() {
+        // Given a collider in negative space: (-5, -5) to (-2, -2)
+        Collider2D collider = new Collider2D(new Vector2(-5, -5), new Vector2(-2, -2));
+
+        assertTrue(collider.collidesWith(new Vector2(-3, -3)), "Point inside negative bounds should collide");
+        assertFalse(collider.collidesWith(new Vector2(0, 0)), "Origin should not collide with this negative box");
+    }
 }

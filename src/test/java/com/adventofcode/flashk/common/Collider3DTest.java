@@ -5,9 +5,87 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class Collider3DTest {
+
+    @Test
+    void testSinglePointConstructorInitialization() {
+        // Given a single point
+        Vector3 point = new Vector3(10, -5, 20);
+
+        // When creating a collider from that point
+        Collider3D collider = new Collider3D(point);
+
+        // Then all bounds must be equal to the point's coordinates
+        assertEquals(10, collider.getMinX());
+        assertEquals(10, collider.getMaxX());
+        assertEquals(-5, collider.getMinY());
+        assertEquals(-5, collider.getMaxY());
+        assertEquals(20, collider.getMinZ());
+        assertEquals(20, collider.getMaxZ());
+    }
+
+    @Test
+    void testConstructorDefensiveCopy() {
+        // Given a vector
+        Vector3 start = new Vector3(0, 0, 0);
+        Vector3 end = new Vector3(1, 1, 1);
+
+        // When creating the collider
+        Collider3D collider = new Collider3D(start, end);
+
+        // And then modifying the original vectors externally
+        start.transform(new Vector3(10, 10, 10));
+
+        // Then the collider bounds must remain unchanged (defensive copy)
+        assertEquals(0, collider.getMinX(), "Collider should be immune to external vector modifications");
+        assertEquals(0, collider.getMinY());
+        assertEquals(0, collider.getMinZ());
+    }
+
+    @Test
+    void testConstructorWithInvertedPoints() {
+        // Given start is "greater" than end
+        Vector3 start = new Vector3(10, 10, 10);
+        Vector3 end = new Vector3(0, 0, 0);
+
+        // When creating the collider
+        Collider3D collider = new Collider3D(start, end);
+
+        // Then min/max must be correctly normalized
+        assertEquals(0, collider.getMinX());
+        assertEquals(10, collider.getMaxX());
+        assertEquals(0, collider.getMinY());
+        assertEquals(10, collider.getMaxY());
+        assertEquals(0, collider.getMinZ());
+        assertEquals(10, collider.getMaxZ());
+    }
+
+    @Test
+    void testCopyConstructor() {
+        // Given an original collider
+        Vector3 start = new Vector3(0, 0, 0);
+        Vector3 end = new Vector3(10, 10, 10);
+        Collider3D original = new Collider3D(start, end);
+
+        // When creating a copy
+        Collider3D copy = new Collider3D(original);
+
+        // Then both must be equal in values
+        assertEquals(original.getMinX(), copy.getMinX());
+        assertEquals(original.getMaxZ(), copy.getMaxZ());
+        assertEquals(original, copy, "The copy should be equal to the original");
+
+        // And when transforming the copy
+        copy.transform(new Vector3(5, 5, 5));
+
+        // Then the original must remain unchanged (deep copy)
+        assertNotEquals(original.getMinX(), copy.getMinX(), "Transforming the copy should not affect the original");
+        assertEquals(0, original.getMinX(), "Original minX should still be 0");
+        assertEquals(5, copy.getMinX(), "Copy minX should now be 5");
+    }
 
     @Test
     void testIdenticalObjectsCollide() {
@@ -121,10 +199,10 @@ class Collider3DTest {
 
         // Limits are updated
         assertEquals(2, collider.getMinX());
-        assertEquals(3, collider.getMinY());
-        assertEquals(5, collider.getMinZ());
         assertEquals(2, collider.getMaxX());
+        assertEquals(3, collider.getMinY());
         assertEquals(3, collider.getMaxY());
+        assertEquals(5, collider.getMinZ());
         assertEquals(5, collider.getMaxZ());
     }
 
@@ -143,6 +221,20 @@ class Collider3DTest {
     }
 
     @Test
+    void testTransformWithSameInitialPoint() {
+        // Created with the same Vector instance for start and end
+        Vector3 sharedPoint = new Vector3(1, 1, 1);
+        Collider3D collider = new Collider3D(sharedPoint, sharedPoint);
+
+        // Move 1 unit in X
+        collider.transform(new Vector3(1, 0, 0));
+
+        // Due to defensive copying in the constructor,
+        // it should only move once (result X should be 2, not 3)
+        assertEquals(2, collider.getMinX(), "Should have moved exactly 1 unit");
+    }
+
+    @Test
     void testNegativeCoordinates() {
         // Move from positive to negative coordinates
         // start(1,1,1) -> end(-1,-1,-1)
@@ -155,5 +247,16 @@ class Collider3DTest {
         assertTrue(brick.collidesWith(center), "Should detect collision even if start/end points are inverted");
         assertEquals(-1, brick.getMinX());
         assertEquals(1, brick.getMaxX());
+    }
+
+    @Test
+    void testPointCollisionMethod() {
+        // Test the overloaded collidesWith(Vector3)
+        Collider3D box = new Collider3D(new Vector3(0, 0, 0), new Vector3(2, 2, 2));
+
+        assertTrue(box.collidesWith(new Vector3(1, 1, 1)), "Point inside should collide");
+        assertTrue(box.collidesWith(new Vector3(0, 0, 0)), "Point on min bound should collide");
+        assertTrue(box.collidesWith(new Vector3(2, 2, 2)), "Point on max bound should collide");
+        assertFalse(box.collidesWith(new Vector3(3, 1, 1)), "Point outside should not collide");
     }
 }

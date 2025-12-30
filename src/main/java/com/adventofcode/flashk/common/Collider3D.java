@@ -21,14 +21,24 @@ public class Collider3D {
     public Collider3D(Vector3 start, Vector3 end) {
         this.start = new Vector3(start);
         this.end = new Vector3(end);
+        calculateMinAndMax();
+    }
 
+    public Collider3D(Vector3 pointCollider) {
+        this.start = new Vector3(pointCollider);
+        this.end = new Vector3(pointCollider);
         calculateMinAndMax();
     }
 
     public Collider3D(Collider3D other) {
         this.start = new Vector3(other.start);
         this.end = new Vector3(other.end);
-        calculateMinAndMax();;
+        this.minX = other.minX;
+        this.maxX = other.maxX;
+        this.minY = other.minY;
+        this.maxY = other.maxY;
+        this.minZ = other.minZ;
+        this.maxZ = other.maxZ;
     }
 
     public void transform(Vector3 vector) {
@@ -36,7 +46,12 @@ public class Collider3D {
         start.transform(vector);
         end.transform(vector);
 
-        calculateMinAndMax();
+        minX += vector.getX();
+        maxX += vector.getX();
+        minY += vector.getY();
+        maxY += vector.getY();
+        minZ += vector.getZ();
+        maxZ += vector.getZ();
     }
 
     private void calculateMinAndMax() {
@@ -53,7 +68,18 @@ public class Collider3D {
         this.maxZ = Math.max(start.getZ(), end.getZ());
     }
 
-    // Axis-Aligned Bounding Box
+    /// Checks if a point is within the bounds of this collider.
+    /// @param point a Vector3 indicating some coordinates.
+    /// @return `true` if the point is inside or collides the collider. `false` otherwise.
+    public boolean collidesWith(Vector3 point) {
+        return point.getX() >= minX && point.getX() <= maxX &&
+                point.getY() >= minY && point.getY() <= maxY &&
+                point.getZ() >= minZ && point.getZ() <= maxZ;
+    }
+
+    /// Checks collision with another Collider3D using AABB (Axis-Aligned Bounding Boxes).
+    /// @param other another Collider3D instance
+    /// @return `true` if there is a collision between both colliders. `false` otherwise.
     public boolean collidesWith(Collider3D other) {
 
         return this.minX <= other.maxX &&
