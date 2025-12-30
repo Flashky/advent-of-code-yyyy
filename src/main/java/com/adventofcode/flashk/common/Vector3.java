@@ -13,14 +13,16 @@ public class Vector3 {
 	private int y;
 	private int z;
 	
-	/// Accepts coordinates in String format as "x,y,z" and creates a Vector3 from it.
-    /// ```
-    /// Vector3 vector1 = new Vector2("4,2,1");
-    /// Vector3 vector2 = new Vector2(4,2,1);
-    /// 
-    /// vector.equals(vector2) // true
-    /// ```
-    /// @param coordinates the coordinates of the vector
+	/**
+	 * Accepts coordinates in String format as "x,y,z" and creates a Vector3 from it.
+	 * <pre>
+	 * Vector3 vector1 = new Vector2("4,2,1");
+	 * Vector3 vector2 = new Vector2(4,2,1);
+	 * 
+	 * vector.equals(vector2) // true
+	 * </pre>
+	 * @param coordinates the coordinates of the vector
+	 */
 	public Vector3(String coordinates) {
 		
 		String[] values = coordinates.split(",");
@@ -51,50 +53,53 @@ public class Vector3 {
 		
 		return new Vector3(x,y,z);
 	}
-
-    public static double distance(Vector3 a, Vector3 b) {
-
-        int xDiff = b.x - a.x;
-        int yDiff = b.y - a.y;
-        int zDiff = b.z - a.z;
-
-        return Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2) + Math.pow(zDiff,2));
-    }
-
-	/// Shorthand for `Vector3(-1,0,0)`.
-    /// @return A unitary vector that points to the left.
+	
+	/**
+	 * Shorthand for <code>Vector3(-1,0,0)</code>.
+	 * @return A unitary vector that points to the left.
+	 */
 	public static Vector3 left() {
 		return new Vector3(-1,0,0);
 	}
 	
-	/// Shorthand for `Vector3(1,0,0)`.
-    /// @return A unitary vector that points to the right.
+	/**
+	 * Shorthand for <code>Vector3(1,0,0)</code>.
+	 * @return A unitary vector that points to the right.
+	 */
 	public static Vector3 right() {
 		return new Vector3(1,0,0);
 	}
 	
-	/// Shorthand for `Vector3(0,1,0)`.
-    /// @return A unitary vector that points up.
+	/**
+	 * Shorthand for <code>Vector3(0,0,1)</code>.
+	 * @return A unitary vector that points up.
+	 */
 	public static Vector3 up() {
-		return new Vector3(0,1,0);
-	}
-	
-	/// Shorthand for `Vector3(0,-1,0)`.
-    /// @return A unitary vector that points down.
-	public static Vector3 down() {
-		return new Vector3(0,-1,0);
-	}
-
-	/// Shorthand for `Vector3(0,0,1)`.
-    /// @return A unitary vector that points forward.
-	public static Vector3 forward() {
 		return new Vector3(0,0,1);
 	}
-
-	/// Shorthand for `Vector3(0,0,-1)`.
-    /// @return A unitary vector that points backwards;
-	public static Vector3 backward() {
+	
+	/**
+	 * Shorthand for <code>Vector3(0,0,-1)</code>.
+	 * @return A unitary vector that points down.
+	 */
+	public static Vector3 down() {
 		return new Vector3(0,0,-1);
+	}
+
+	/**
+	 * Shorthand for <code>Vector3(0,1,0)</code>.
+	 * @return A unitary vector that points forward;
+	 */
+	public static Vector3 forward() {
+		return new Vector3(0,1,0);
+	}
+
+	/**
+	 * Shorthand for <code>Vector3(0,-1,0)</code>.
+	 * @return A unitary vector that points backwards;
+	 */
+	public static Vector3 backward() {
+		return new Vector3(0,-1,0);
 	}
 	
 }

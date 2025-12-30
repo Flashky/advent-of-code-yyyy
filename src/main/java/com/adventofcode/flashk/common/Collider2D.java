@@ -7,11 +7,8 @@ import lombok.Getter;
 @Getter
 public class Collider2D {
 
-	// Reference for ideas: 
-	// https://stackoverflow.com/questions/907390/how-can-i-tell-if-a-point-belongs-to-a-certain-line
-
-	private Vector2 start;
-	private Vector2 end;
+	private final Vector2 start;
+	private final Vector2 end;
 	
 	private long minX;
 	private long maxX;
@@ -27,49 +24,37 @@ public class Collider2D {
 	
 	public Collider2D(Vector2 pointCollider) {
 		this.start = new Vector2(pointCollider);
-		this.end = start;
+		this.end = new Vector2(pointCollider);
 		minX = pointCollider.getX();
 		maxX = pointCollider.getX();
 		minY = pointCollider.getY();
 		maxY = pointCollider.getY();
 	}
-	
-	
-	public boolean collidesWith(Vector2 point) {
-		
-		if(point.equals(start) || point.equals(end)) {
-			return true;
-		}
-		
-		// Reference for ideas: 
-		// https://stackoverflow.com/questions/907390/how-can-i-tell-if-a-point-belongs-to-a-certain-line
-		
-		// check from line segment start perspective
-		double reference = Math.atan2(start.getY() - end.getY(), start.getX() - end.getX());
-		double aTanTest = Math.atan2(start.getY() - point.getY(), start.getX() - point.getX());
-		
-		// check from line segment end perspective
-		if(reference == aTanTest) {
-			reference = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
-			aTanTest = Math.atan2(end.getY()- point.getY(), end.getX() - point.getX());
-		}
-		
-		// Tested cases at junit: vertical and horizontal
-		// Non-tested cases: diagonals
-		return reference == aTanTest;
+
+	public Collider2D(Collider2D other) {
+		this.start = new Vector2(other.start);
+		this.end = new Vector2(other.end);
+		this.minX = other.minX;
+		this.maxX = other.maxX;
+		this.minY = other.minY;
+		this.maxY = other.maxY;
 	}
 	
 	public void transform(Vector2 vector) {
 
-		if(start != end) {
-			start.transform(vector);
-			end.transform(vector);
-		} else {
-			// Only transform once
-			start.transform(vector);
-		}
-		
-		calculateMinAndMax(start, end);
+		start.transform(vector);
+		end.transform(vector);
+
+		// Update bounds
+		minX += vector.getX();
+		maxX += vector.getX();
+		minY += vector.getY();
+		maxY += vector.getY();
+	}
+
+	public boolean collidesWith(Vector2 point) {
+		return point.getX() >= minX && point.getX() <= maxX &&
+				point.getY() >= minY && point.getY() <= maxY;
 	}
 
 	public boolean collidesWith(Collider2D other) {
