@@ -20,7 +20,7 @@ Helper class to allow calculating collisions between two ``Vector3`` or ``Collid
 
 ## MathUtil
 
-Helper class for making basic mathematics calculations.
+Helper class for making basic mathematical calculations.
 
 ## BaseUtil
 
