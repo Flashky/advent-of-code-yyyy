@@ -3,9 +3,49 @@ package com.adventofcode.flashk.common;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class Collider2DTest {
+
+    @Test
+    void testSinglePointConstructor() {
+        // Given a single point
+        Vector2 point = new Vector2(10, 20);
+
+        // When creating a collider from that point
+        Collider2D collider = new Collider2D(point);
+
+        // Then all bounds must represent that single point
+        assertEquals(10, collider.getMinX());
+        assertEquals(10, collider.getMaxX());
+        assertEquals(20, collider.getMinY());
+        assertEquals(20, collider.getMaxY());
+
+        // And start/end points should be independent copies
+        point.transform(new Vector2(100, 100));
+        assertEquals(10, collider.getMinX(), "Collider should not change when the original point vector is modified");
+    }
+
+    @Test
+    void testCopyConstructor() {
+        // Given an original collider
+        Collider2D original = new Collider2D(new Vector2(0, 0), new Vector2(5, 5));
+
+        // When creating a copy
+        Collider2D copy = new Collider2D(original);
+
+        // Then bounds must be identical
+        assertEquals(original.getMinX(), copy.getMinX());
+        assertEquals(original.getMaxY(), copy.getMaxY());
+        assertEquals(original, copy, "The copy should be equal to the original");
+
+        // And they must be independent (Deep Copy)
+        copy.transform(new Vector2(10, 10));
+        assertNotEquals(original.getMinX(), copy.getMinX(), "Transforming the copy should not affect the original");
+        assertEquals(0, original.getMinX(), "Original minX should remain 0");
+        assertEquals(10, copy.getMinX(), "Copy minX should be updated to 10");
+    }
 
     @Test
     void testIdenticalObjectsCollide() {
