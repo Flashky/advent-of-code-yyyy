@@ -14,9 +14,13 @@ Basic class for storing 3D integer based coordinates (x, y and z).
 
 Helper class to allow calculating collisions between two ``Vector2`` or ``Collider2D`` objects.
 
+## Collider3D
+
+Helper class to allow calculating collisions between two ``Vector3`` or ``Collider3D`` objects.
+
 ## MathUtil
 
-Helper class for making basic mathematic calculations.
+Helper class for making basic mathematics calculations.
 
 ## BaseUtil
 
