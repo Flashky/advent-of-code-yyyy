@@ -20,7 +20,7 @@ on:
     #paths-ignore:
     #  - '.github/**'
   schedule:
-    - cron: '30 11 * * *' # Every day at 06:00 UTC
+    - cron: '25 9 * * *' # Every day at 06:00 UTC
 
 jobs:
 
