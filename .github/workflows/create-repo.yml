@@ -1,0 +1,64 @@
+name: Create AoC repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      aoc_year:
+        description: 'Advent of Code year (e.g. 2025)'
+        required: true
+        type: string
+
+jobs:
+  create-repo:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Validate Year Format
+        env:
+          YEAR: ${{ inputs.aoc_year }}
+        run: |
+          if [[ "YEAR" =~ ^[0-9]{4}$ ]]; then
+            echo "Year 'YEAR' format is valid."
+          else
+            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., 2025)."
+            exit 1
+          fi
+
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Create Repository from Template
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          YEAR: ${{ inputs.aoc_year }}
+        run: |
+          REPO_NAME="advent-of-code-$YEAR"
+          
+          # 1. Crear el repositorio nuevo a partir del template actual
+          echo "Creating repository Flashky/$REPO_NAME from template..."
+          gh repo create "Flashky/$REPO_NAME" \
+            --template "Flashky/advent-of-code-yyyy" --public
+          
+          # 2. Activar el auto-merge inmediatamente
+          echo "Enabling auto-merge..."
+          gh api "repos/Flashky/$REPO_NAME" \
+            -X PATCH \
+            -F allow_auto_merge=true
+          
+          # 3. Configurar el secreto PAT_TOKEN en el nuevo repositorio
+          echo "Setting PAT_TOKEN secret in the new repository..."
+          gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --repo "Flashky/$REPO_NAME"
+          
+          # 3. Esperar unos segundos a que GitHub inicialice las acciones del nuevo repo
+          echo "Waiting for repository initialization..."
+          sleep 10
+
+          # 4. Disparar el workflow 'Update year' en el nuevo repositorio
+          echo "Triggering 'Update year' workflow..."
+          gh workflow run "Update year" \
+            --repo "Flashky/$REPO_NAME" \
+            -f aoc_year="$YEAR"
+          
+          echo "Repository Flashky/$REPO_NAME successfully created and configured!"
