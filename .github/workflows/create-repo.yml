@@ -9,19 +9,47 @@ on:
         type: string
 
 jobs:
-  create-repo:
+  verify:
     runs-on: ubuntu-26.04
+    outputs:
+      repo_name: ${{ steps.set-vars.outputs.repo_name }}
+      year: ${{ steps.set-vars.outputs.year }}
     steps:
       - name: Validate Year Format
+        id: set-vars
         env:
           YEAR: ${{ inputs.aoc_year }}
         run: |
           if [[ "$YEAR" =~ ^[0-9]{4}$ ]]; then
             echo "Year '$YEAR' format is valid."
+            echo "year=$YEAR" >> $GITHUB_OUTPUT
+            echo "repo_name=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
           else
             echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., 2025)."
             exit 1
           fi
+
+      - name: Check Required Secrets
+        run: |
+          MISSING=0
+          if [ -z "${{ secrets.PAT_TOKEN }}" ]; then
+            echo "::error title=Missing Secret::PAT_TOKEN secret is not set."
+            MISSING=1
+          fi
+          if [ -z "${{ secrets.CODACY_API_TOKEN }}" ]; then
+            echo "::error title=Missing Secret::CODACY_API_TOKEN secret is not set."
+            MISSING=1
+          fi
+          if [ "$MISSING" -eq 1 ]; then
+            exit 1
+          fi
+
+  create-repository:
+    needs: verify
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Authenticate with GitHub CLI
         env:
@@ -32,75 +60,123 @@ jobs:
       - name: Create Repository from Template
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          YEAR: ${{ inputs.aoc_year }}
         run: |
-          REPO_NAME="advent-of-code-$YEAR"
-          
-          # 1. Crear el repositorio nuevo a partir del template actual
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
           echo "Creating repository Flashky/$REPO_NAME from template..."
           gh repo create "Flashky/$REPO_NAME" \
             --template "Flashky/advent-of-code-yyyy" --public
-          
-          # 2. Activar el auto-merge inmediatamente
-          echo "Enabling auto-merge..."
+
+  configure-settings:
+    needs: [verify, create-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Enable Auto-Merge
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          echo "Enabling auto-merge for $REPO_NAME..."
           gh api "repos/Flashky/$REPO_NAME" \
             -X PATCH \
             -F allow_auto_merge=true
-          
-          # 3. Configurar el secreto PAT_TOKEN en el nuevo repositorio
-          echo "Setting PAT_TOKEN secret Actions..."
-          gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --repo "Flashky/$REPO_NAME"
 
+  configure-pat-secrets:
+    needs: [verify, create-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Set PAT_TOKEN Secret for Actions and Dependabot
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          
+          echo "Setting PAT_TOKEN secret for Actions..."
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "Flashky/$REPO_NAME"
+          
           echo "Setting PAT_TOKEN secret for Dependabot..."
-          gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --app dependabot --repo "Flashky/$REPO_NAME"
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
 
-          # 4. Integración con Codacy: Habilitar repo y generar Project Token
-          echo "Syncing repository with Codacy and generating project token..."
-          
-          CODACY_PROVIDER="gh"
-          CODACY_OWNER="Flashky"
+  configure-codacy:
+    needs: [verify, create-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          # Paso A: Forzar la sincronización / habilitar el repositorio en Codacy
-          # (Dependiendo de la configuración de tu organización en Codacy, los repos públicos a veces se auto-detectan,
-          # pero este endpoint asegura el registro/activación mediante su API v3)
-          curl -s -X POST "https://api.codacy.com/api/v3/organizations/$CODACY_PROVIDER/$CODACY_OWNER/repositories/$REPO_NAME/enable" \
-            -H "Accept: application/json" \
-            -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
-            || echo "Repository might already be enabled or pending synchronization."
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
 
-          # Paso B: Intentar crear/obtener el token de proyecto específico para este repo
-          # (El endpoint de creación de tokens de proyecto en la API v3 de Codacy)
-          TOKEN_RESPONSE=$(curl -s -X POST "https://api.codacy.com/api/v3/organizations/$CODACY_PROVIDER/$CODACY_OWNER/repositories/$REPO_NAME/tokens" \
-              -H "Accept: application/json" \
-              -H "Content-Type: application/json" \
-              -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
-              -d '{"name": "gh-actions-auto-token"}')
-          
-          PROJECT_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.data.token // .token // empty')
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/*.sh
 
-          if [ -n "$PROJECT_TOKEN" ] && [ "$PROJECT_TOKEN" != "null" ]; then
-            echo "Codacy project token successfully generated!"
+      - name: Register Repository in Codacy
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          .github/scripts/add-codacy-repo.sh "$REPO_NAME"
+
+      - name: Generate and Configure Codacy Project Token
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+
+          if PROJECT_TOKEN=$(.github/scripts/codacy-create-token.sh "$REPO_NAME"); then
+            echo "Token successfully generated!"
             break
-          else 
-            echo "::error title=Codacy Token Error::Timed out waiting for Codacy repository indexing and token generation."
-            exit 1
           fi
-
-          # Paso C: Inyectar el token obtenido en el nuevo repositorio de GitHub (Actions y Dependabot)
+          
+          # Mask and set secrets in the new repository
+          echo "::add-mask::$PROJECT_TOKEN"
+          
           echo "Setting CODACY_PROJECT_TOKEN secret for Actions..."
           gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --repo "Flashky/$REPO_NAME"
           
           echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
           gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
-            
-          # 3. Esperar unos segundos a que GitHub inicialice las acciones del nuevo repo
-          #echo "Waiting for repository initialization..."
-          #sleep 10
 
-          # 5. Disparar el workflow 'Update year' en el nuevo repositorio
+  trigger-init-workflow:
+    needs: [ configure-settings, configure-pat-secrets, configure-codacy ]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Trigger 'Update year' workflow
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          YEAR="${{ needs.verify.outputs.year }}"
+          
+          echo "Waiting a few seconds for repository initialization..."
+          sleep 5
+          
           echo "Triggering 'Update year' workflow..."
           gh workflow run "Update year" \
             --repo "Flashky/$REPO_NAME" \
-            -f aoc_year="$YEAR"
+            -f aoc_year="$YEAR" \
+            || echo "Warning: Workflow 'Update year' could not be triggered automatically (it might not exist in the template yet)."
           
-          echo "Repository Flashky/$REPO_NAME successfully created and configured!"
+          echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
