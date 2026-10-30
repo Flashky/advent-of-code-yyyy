@@ -16,8 +16,8 @@ jobs:
         env:
           YEAR: ${{ inputs.aoc_year }}
         run: |
-          if [[ "YEAR" =~ ^[0-9]{4}$ ]]; then
-            echo "Year 'YEAR' format is valid."
+          if [[ "$YEAR" =~ ^[0-9]{4}$ ]]; then
+            echo "Year '$YEAR' format is valid."
           else
             echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., 2025)."
             exit 1
