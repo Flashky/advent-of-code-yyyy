@@ -5,7 +5,6 @@ import com.adventofcode.flashk.common.test.constants.TestFolder;
 import com.adventofcode.flashk.common.test.utils.Input;
 import com.google.gson.JsonElement;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
@@ -15,7 +14,7 @@ class JsonUtilTest {
 
     @Test
     void buildTreeFromArrayJsonTest() {
-        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).getFirst();
         JsonNode jsonNode = JsonUtil.buildTree(content);
 
         assertNotNull(jsonNode);
@@ -28,14 +27,14 @@ class JsonUtilTest {
 
     @Test
     void buildTreeFromInvalidJsonTest() {
-        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.INVALID_JSON).get(0);
-        assertThrows(IllegalArgumentException.class, () -> { JsonUtil.buildTree(content); });
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.INVALID_JSON).getFirst();
+        assertThrows(IllegalArgumentException.class, () -> JsonUtil.buildTree(content));
     }
 
     @Test
     void buildGsonTreeTest() {
 
-        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).getFirst();
         JsonElement jsonElement = JsonUtil.buildGsonTree(content);
 
         assertNotNull(jsonElement);
@@ -49,7 +48,7 @@ class JsonUtilTest {
     @Test
     void isIntTest() {
 
-        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).get(0);
+        String content = Input.readStringLines(TestFolder.COMMON, TestFilename.ARRAY_JSON).getFirst();
         JsonElement jsonElement = JsonUtil.buildGsonTree(content).getAsJsonArray().get(0);
 
         assertTrue(JsonUtil.isInt(jsonElement));
