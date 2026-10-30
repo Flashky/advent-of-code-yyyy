@@ -39,14 +39,18 @@ jobs:
           # 1. Crear el repositorio nuevo a partir del template actual
           echo "Creating repository Flashky/$REPO_NAME from template..."
           gh repo create "Flashky/$REPO_NAME" \
-            --template "Flashky/advent-of-code-yyyy"
+            --template "Flashky/advent-of-code-yyyy" --public
           
           # 2. Activar el auto-merge inmediatamente
           echo "Enabling auto-merge..."
           gh api "repos/Flashky/$REPO_NAME" \
             -X PATCH \
-            -f allow_auto_merge=true
-
+            -F allow_auto_merge=true
+          
+          # 3. Configurar el secreto PAT_TOKEN en el nuevo repositorio
+          echo "Setting PAT_TOKEN secret in the new repository..."
+          gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --repo "Flashky/$REPO_NAME"
+          
           # 3. Esperar unos segundos a que GitHub inicialice las acciones del nuevo repo
           echo "Waiting for repository initialization..."
           sleep 10
