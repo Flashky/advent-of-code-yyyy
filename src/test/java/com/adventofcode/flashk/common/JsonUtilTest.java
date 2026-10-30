@@ -3,15 +3,14 @@ package com.adventofcode.flashk.common;
 import com.adventofcode.flashk.common.test.constants.TestFilename;
 import com.adventofcode.flashk.common.test.constants.TestFolder;
 import com.adventofcode.flashk.common.test.utils.Input;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonElement;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Disabled
 class JsonUtilTest {
 
     @Test

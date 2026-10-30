@@ -1,10 +1,10 @@
 package com.adventofcode.flashk.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 public final class JsonUtil {
 
@@ -24,13 +24,13 @@ public final class JsonUtil {
     /// @return The parsed `JsonNode` Jackson based tree.
 	public static JsonNode buildTree(String input) {
 		try {
-			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.readTree(input);
-		} catch (JsonProcessingException _) {
+			return JsonMapper.builder().build().readTree(input);
+
+		} catch (JacksonException _) {
 			throw new IllegalArgumentException("The file "+input+" has wrong format.");
 		}
 	}
-	
+
 	/// Builds a json tree using Gson library.
 	/// 
     /// Input accepts basic json and even simple arrays such as:
