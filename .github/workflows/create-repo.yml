@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Validate Year Format
+        env:
+          YEAR: ${{ inputs.aoc_year }}
         run: |
-          if [[ "${{ inputs.aoc_year }}" =~ ^[0-9]{4}$ ]]; then
-            echo "Year '${{ inputs.aoc_year }}' format is valid."
+          if [[ "YEAR" =~ ^[0-9]{4}$ ]]; then
+            echo "Year 'YEAR' format is valid."
           else
             echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., 2025)."
             exit 1
