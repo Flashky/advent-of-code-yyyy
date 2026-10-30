@@ -48,8 +48,11 @@ jobs:
             -F allow_auto_merge=true
           
           # 3. Configurar el secreto PAT_TOKEN en el nuevo repositorio
-          echo "Setting PAT_TOKEN secret in the new repository..."
+          echo "Setting PAT_TOKEN secret Actions..."
           gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --repo "Flashky/$REPO_NAME"
+
+          echo "Setting PAT_TOKEN secret for Dependabot..."
+          gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --app dependabot --repo "Flashky/$REPO_NAME"
           
           # 3. Esperar unos segundos a que GitHub inicialice las acciones del nuevo repo
           echo "Waiting for repository initialization..."
