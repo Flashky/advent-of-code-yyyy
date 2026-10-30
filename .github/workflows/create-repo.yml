@@ -53,12 +53,51 @@ jobs:
 
           echo "Setting PAT_TOKEN secret for Dependabot..."
           gh secret set PAT_TOKEN --body "${{ secrets.PAT_TOKEN }}" --app dependabot --repo "Flashky/$REPO_NAME"
-          
-          # 3. Esperar unos segundos a que GitHub inicialice las acciones del nuevo repo
-          echo "Waiting for repository initialization..."
-          sleep 10
 
-          # 4. Disparar el workflow 'Update year' en el nuevo repositorio
+          # 4. Integración con Codacy: Habilitar repo y generar Project Token
+          echo "Syncing repository with Codacy and generating project token..."
+          
+          CODACY_PROVIDER="gh"
+          CODACY_OWNER="Flashky"
+
+          # Paso A: Forzar la sincronización / habilitar el repositorio en Codacy
+          # (Dependiendo de la configuración de tu organización en Codacy, los repos públicos a veces se auto-detectan,
+          # pero este endpoint asegura el registro/activación mediante su API v3)
+          curl -s -X POST "https://api.codacy.com/api/v3/organizations/$CODACY_PROVIDER/$CODACY_OWNER/repositories/$REPO_NAME/enable" \
+            -H "Accept: application/json" \
+            -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
+            || echo "Repository might already be enabled or pending synchronization."
+
+          # Paso B: Intentar crear/obtener el token de proyecto específico para este repo
+          # (El endpoint de creación de tokens de proyecto en la API v3 de Codacy)
+          TOKEN_RESPONSE=$(curl -s -X POST "https://api.codacy.com/api/v3/organizations/$CODACY_PROVIDER/$CODACY_OWNER/repositories/$REPO_NAME/tokens" \
+              -H "Accept: application/json" \
+              -H "Content-Type: application/json" \
+              -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
+              -d '{"name": "gh-actions-auto-token"}')
+          
+          PROJECT_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.data.token // .token // empty')
+
+          if [ -n "$PROJECT_TOKEN" ] && [ "$PROJECT_TOKEN" != "null" ]; then
+            echo "Codacy project token successfully generated!"
+            break
+          else 
+            echo "::error title=Codacy Token Error::Timed out waiting for Codacy repository indexing and token generation."
+            exit 1
+          fi
+
+          # Paso C: Inyectar el token obtenido en el nuevo repositorio de GitHub (Actions y Dependabot)
+          echo "Setting CODACY_PROJECT_TOKEN secret for Actions..."
+          gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --repo "Flashky/$REPO_NAME"
+          
+          echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
+          gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
+            
+          # 3. Esperar unos segundos a que GitHub inicialice las acciones del nuevo repo
+          #echo "Waiting for repository initialization..."
+          #sleep 10
+
+          # 5. Disparar el workflow 'Update year' en el nuevo repositorio
           echo "Triggering 'Update year' workflow..."
           gh workflow run "Update year" \
             --repo "Flashky/$REPO_NAME" \
