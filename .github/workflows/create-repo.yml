@@ -321,7 +321,7 @@ jobs:
 
       - name: Add Data Repository as Submodule
         env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
           
