@@ -130,7 +130,7 @@ jobs:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           REPO_NAME="${{ needs.verify.outputs.repo_name }}"
-          bash .github/scripts/add-codacy-repo.sh "$REPO_NAME"
+          bash .github/scripts/codacy-add-repository.sh "$REPO_NAME"
 
       - name: Generate and Configure Codacy Project Token
         env:
@@ -156,7 +156,7 @@ jobs:
           gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
 
   trigger-init-workflow:
-    needs: [ configure-settings, configure-pat-secrets, configure-codacy ]
+    needs: [ verify, configure-settings, configure-pat-secrets, configure-codacy ]
     runs-on: ubuntu-26.04
     steps:
       - name: Authenticate with GitHub CLI
@@ -168,8 +168,8 @@ jobs:
       - name: Trigger 'Update year' workflow
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
           YEAR="${{ needs.verify.outputs.year }}"
           
           echo "Waiting a few seconds for repository initialization..."
