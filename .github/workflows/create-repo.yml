@@ -266,8 +266,48 @@ jobs:
           
           echo "Repository Flashky/$DATA_REPO_NAME successfully created and fully configured!"
 
+  add-data-submodule:
+    needs: [verify, configure-settings, configure-pat-secrets, create-data-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI and Configure Git Identity
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
+      - name: Checkout Solutions Repository
+        uses: actions/checkout@v7
+        with:
+          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
+          token: ${{ secrets.PAT_TOKEN }}
+          submodules: false
+
+      - name: Add Data Repository as Submodule
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          
+          echo "Adding private data repository as submodule..."
+          git submodule add -b master "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
+
+      - name: Create Pull Request for Submodule
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
+          commit-message: "test: add data repository as submodule"
+          title: "Add data repository as submodule"
+          body: |
+            This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`.
+          branch: add-data-submodule
+          base: master
+
   generate-pull-request-summary:
-    needs: [verify, trigger-solutions-update-year, trigger-data-update-year]
+    needs: [verify, trigger-solutions-update-year, trigger-data-update-year, add-data-submodule]
     runs-on: ubuntu-26.04
     steps:
       - name: Authenticate with GitHub CLI
@@ -292,6 +332,9 @@ jobs:
           echo "Fetching data repository PR..."
           DATA_PR_URL=$(gh pr list --repo "Flashky/$DATA_REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
           
+          echo "Fetching solutions Submodule PR..."
+          SUBMODULE_PR=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Add data repository as submodule" --json url --jq '.[0].url // empty')
+          
           echo "### 🎄 Advent of Code Setup Summary" >> $GITHUB_STEP_SUMMARY
           echo "Repositories have been successfully created, configured, and initialized." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -308,4 +351,11 @@ jobs:
             echo "- 💾 **Data Repository PR**: [Merge Update PR]($DATA_PR_URL)" >> $GITHUB_STEP_SUMMARY
           else
             echo "::warning::Data PR could not be found automatically."
+          fi
+          
+          if [ -n "$SUBMODULE_PR" ]; then
+            echo "::notice title=Solutions Submodule PR:: $SUBMODULE_PR"
+            echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Solutions Submodule PR could not be found automatically."
           fi
