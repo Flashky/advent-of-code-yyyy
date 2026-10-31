@@ -256,7 +256,7 @@ jobs:
           YEAR="${{ needs.verify.outputs.year }}"
           
           echo "Waiting a few seconds for data repository initialization..."
-          sleep 5
+          sleep 10
           
           echo "Triggering 'Update year' workflow on $DATA_REPO_NAME..."
           gh workflow run "Update year" \
