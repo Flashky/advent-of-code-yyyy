@@ -106,6 +106,16 @@ jobs:
             -X PATCH \
             -F allow_auto_merge=true
 
+      - name: Allow Actions to Create and Approve PRs
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          echo "Configuring workflow permissions for $REPO_NAME..."
+          gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
+
       - name: Import Branch Protection Ruleset
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -190,6 +200,26 @@ jobs:
           echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
           gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
 
+  configure-data-settings:
+    needs: [verify, create-data-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Allow Actions to Create and Approve PRs on Data Repo
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          echo "Configuring workflow permissions for $DATA_REPO_NAME..."
+          gh api --method PUT "repos/Flashky/$DATA_REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
+
   configure-data-pat-secrets:
     needs: [verify, create-data-repository]
     runs-on: ubuntu-26.04
@@ -239,7 +269,7 @@ jobs:
           echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
 
   trigger-data-update-year:
-    needs: [verify, create-data-repository, configure-data-pat-secrets]
+    needs: [verify, create-data-repository, configure-data-settings, configure-data-pat-secrets]
     runs-on: ubuntu-26.04
     steps:
       - name: Authenticate with GitHub CLI
@@ -277,6 +307,7 @@ jobs:
           gh auth setup-git
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
+          git config --global url."https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
       - name: Checkout Solutions Repository
         uses: actions/checkout@v7
@@ -292,14 +323,14 @@ jobs:
           DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
           
           echo "Adding private data repository as submodule..."
-          git submodule add -b master "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
+          git submodule add -b master "https://github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
 
       - name: Create Pull Request for Submodule
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "test: add data repository as submodule"
+          sign-commits: true
           title: "Add data repository as submodule"
           body: |
             This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`.
@@ -323,8 +354,8 @@ jobs:
           REPO_NAME="${{ needs.verify.outputs.repo_name }}"
           DATA_REPO_NAME="$REPO_NAME-data"
           
-          echo "Waiting 15 seconds for workflows to generate Pull Requests..."
-          sleep 15
+          echo "Waiting 20 seconds for workflows to generate Pull Requests..."
+          sleep 20
           
           echo "Fetching solutions repository PR..."
           SOLUTIONS_PR_URL=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
@@ -354,7 +385,7 @@ jobs:
           fi
           
           if [ -n "$SUBMODULE_PR" ]; then
-            echo "::notice title=Solutions Submodule PR:: $SUBMODULE_PR"
+            echo "::notice title=Submodule PR Ready::Please review and merge the Submodule PR for solutions:: $SUBMODULE_PR"
             echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR)" >> $GITHUB_STEP_SUMMARY
           else
             echo "::warning::Solutions Submodule PR could not be found automatically."
