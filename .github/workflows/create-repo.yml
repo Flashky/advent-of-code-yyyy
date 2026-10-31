@@ -86,6 +86,21 @@ jobs:
             -X PATCH \
             -F allow_auto_merge=true
 
+      - name: Import Branch Protection Ruleset
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          RULESET_FILE=".github/settings/branch-protection-ruleset.json"
+          
+          if [ -f "$RULESET_FILE" ]; then
+            echo "Importing branch protection ruleset into $REPO_NAME..."
+            gh api "repos/Flashky/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
+            echo "Ruleset successfully applied!"
+          else
+            echo "::warning title=Ruleset Missing::Ruleset file not found at $RULESET_FILE, skipping."
+          fi
+
   configure-pat-secrets:
     needs: [verify, create-repository]
     runs-on: ubuntu-26.04
