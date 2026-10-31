@@ -264,4 +264,48 @@ jobs:
             -f aoc_year="$YEAR" \
             || echo "Warning: Workflow 'Update year' could not be triggered automatically."
           
-          echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
+          echo "Repository Flashky/$DATA_REPO_NAME successfully created and fully configured!"
+
+  notify-pr-links:
+    needs: [verify, trigger-solutions-update-year, trigger-data-update-year]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Find and Annotate Update Year PRs
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          DATA_REPO_NAME="$REPO_NAME-data"
+          
+          echo "Waiting 15 seconds for workflows to generate Pull Requests..."
+          sleep 15
+          
+          echo "Fetching solutions repository PR..."
+          SOLUTIONS_PR_URL=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
+          
+          echo "Fetching data repository PR..."
+          DATA_PR_URL=$(gh pr list --repo "Flashky/$DATA_REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
+          
+          echo "### 🎄 Advent of Code Setup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Repositories have been successfully created, configured, and initialized." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "$SOLUTIONS_PR_URL" ]; then
+            echo "::notice title=Solutions PR Ready::Please review and merge the Update year PR for solutions: $SOLUTIONS_PR_URL"
+            echo "- 🚀 **Solutions Repository PR**: [Merge Update PR]($SOLUTIONS_PR_URL)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Solutions PR could not be found automatically."
+          fi
+          
+          if [ -n "$DATA_PR_URL" ]; then
+            echo "::notice title=Data PR Ready::Please review and merge the Update year PR for data: $DATA_PR_URL"
+            echo "- 💾 **Data Repository PR**: [Merge Update PR]($DATA_PR_URL)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Data PR could not be found automatically."
+          fi
