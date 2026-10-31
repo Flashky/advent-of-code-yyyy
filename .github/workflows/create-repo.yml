@@ -269,7 +269,7 @@ jobs:
           echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
 
   trigger-data-update-year:
-    needs: [verify, create-data-repository, configure-data-pat-secrets]
+    needs: [verify, create-data-repository, configure-data-settings, configure-data-pat-secrets]
     runs-on: ubuntu-26.04
     steps:
       - name: Authenticate with GitHub CLI
