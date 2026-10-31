@@ -158,7 +158,7 @@ jobs:
           gh auth setup-git
 
       - name: Make scripts executable
-        run: chmod +x .github/scripts/*.sh
+        run: chmod +x .github/scripts/codacy-add-repository.sh .github/scripts/codacy-create-token.sh
 
       - name: Register Repository in Codacy
         env:
@@ -266,7 +266,7 @@ jobs:
           
           echo "Repository Flashky/$DATA_REPO_NAME successfully created and fully configured!"
 
-  notify-pr-links:
+  generate-pull-request-summary:
     needs: [verify, trigger-solutions-update-year, trigger-data-update-year]
     runs-on: ubuntu-26.04
     steps:
