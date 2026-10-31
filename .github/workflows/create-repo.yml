@@ -299,6 +299,9 @@ jobs:
   add-data-submodule:
     needs: [verify, configure-settings, configure-pat-secrets, create-data-repository]
     runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Authenticate with GitHub CLI and Configure Git Identity
         env:
