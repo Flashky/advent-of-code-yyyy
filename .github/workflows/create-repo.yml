@@ -211,7 +211,7 @@ jobs:
           gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "Flashky/$DATA_REPO_NAME"
 
   trigger-solutions-update-year:
-    needs: [ verify, configure-settings, configure-pat-secrets, configure-codacy ]
+    needs: [ configure-settings, configure-pat-secrets, configure-codacy ]
     runs-on: ubuntu-26.04
     steps:
       - name: Authenticate with GitHub CLI
