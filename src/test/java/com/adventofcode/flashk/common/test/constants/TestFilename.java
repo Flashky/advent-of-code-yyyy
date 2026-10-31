@@ -9,8 +9,4 @@ public final class TestFilename {
 	public static final String SAMPLE_FILE = "sample.txt";
 	public static final String SAMPLE_SINGLE_FILE = "sample_single.txt";
 
-	// Other tests
-	public static final String ARRAY_JSON = "array.json";
-	public static final String INVALID_JSON = "invalid.json";
-
 }
