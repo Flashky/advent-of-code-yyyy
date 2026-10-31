@@ -63,8 +63,25 @@ jobs:
         run: |
           REPO_NAME="${{ needs.verify.outputs.repo_name }}"
           echo "Creating repository Flashky/$REPO_NAME from template..."
-          gh repo create "Flashky/$REPO_NAME" \
-            --template "Flashky/advent-of-code-yyyy" --public
+          gh repo create "Flashky/$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+
+  create-data-repository:
+    needs: verify
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Create Data Repository from Template
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          echo "Creating private data repository Flashky/$DATA_REPO_NAME from template..."
+          gh repo create "Flashky/$DATA_REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
 
   configure-settings:
     needs: [verify, create-repository]
@@ -141,7 +158,7 @@ jobs:
           gh auth setup-git
 
       - name: Make scripts executable
-        run: chmod +x .github/scripts/*.sh
+        run: chmod +x .github/scripts/codacy-add-repository.sh .github/scripts/codacy-create-token.sh
 
       - name: Register Repository in Codacy
         env:
@@ -173,7 +190,27 @@ jobs:
           echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
           gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
 
-  trigger-init-workflow:
+  configure-data-pat-secrets:
+    needs: [verify, create-data-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Set PAT_TOKEN Secret for Actions on Data Repo
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          
+          echo "Setting PAT_TOKEN secret for Actions on $DATA_REPO_NAME..."
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "Flashky/$DATA_REPO_NAME"
+
+  trigger-solutions-update-year:
     needs: [ verify, configure-settings, configure-pat-secrets, configure-codacy ]
     runs-on: ubuntu-26.04
     steps:
@@ -200,3 +237,125 @@ jobs:
             || echo "Warning: Workflow 'Update year' could not be triggered automatically (it might not exist in the template yet)."
           
           echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
+
+  trigger-data-update-year:
+    needs: [verify, create-data-repository, configure-data-pat-secrets]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Trigger 'Update year' workflow on Data Repository
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          DATA_REPO_NAME: "${{ needs.verify.outputs.repo_name }}-data"
+        run: |
+          YEAR="${{ needs.verify.outputs.year }}"
+          
+          echo "Waiting a few seconds for data repository initialization..."
+          sleep 10
+          
+          echo "Triggering 'Update year' workflow on $DATA_REPO_NAME..."
+          gh workflow run "Update year" \
+            --repo "Flashky/$DATA_REPO_NAME" \
+            -f aoc_year="$YEAR" \
+            || echo "Warning: Workflow 'Update year' could not be triggered automatically."
+          
+          echo "Repository Flashky/$DATA_REPO_NAME successfully created and fully configured!"
+
+  add-data-submodule:
+    needs: [verify, configure-settings, configure-pat-secrets, create-data-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI and Configure Git Identity
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
+      - name: Checkout Solutions Repository
+        uses: actions/checkout@v7
+        with:
+          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
+          token: ${{ secrets.PAT_TOKEN }}
+          submodules: false
+
+      - name: Add Data Repository as Submodule
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          
+          echo "Adding private data repository as submodule..."
+          git submodule add -b master "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
+
+      - name: Create Pull Request for Submodule
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
+          commit-message: "test: add data repository as submodule"
+          title: "Add data repository as submodule"
+          body: |
+            This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`.
+          branch: add-data-submodule
+          base: master
+
+  generate-pull-request-summary:
+    needs: [verify, trigger-solutions-update-year, trigger-data-update-year, add-data-submodule]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Find and Annotate Update Year PRs
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          DATA_REPO_NAME="$REPO_NAME-data"
+          
+          echo "Waiting 15 seconds for workflows to generate Pull Requests..."
+          sleep 15
+          
+          echo "Fetching solutions repository PR..."
+          SOLUTIONS_PR_URL=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
+          
+          echo "Fetching data repository PR..."
+          DATA_PR_URL=$(gh pr list --repo "Flashky/$DATA_REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
+          
+          echo "Fetching solutions Submodule PR..."
+          SUBMODULE_PR=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Add data repository as submodule" --json url --jq '.[0].url // empty')
+          
+          echo "### 🎄 Advent of Code Setup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Repositories have been successfully created, configured, and initialized." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "$SOLUTIONS_PR_URL" ]; then
+            echo "::notice title=Solutions PR Ready::Please review and merge the Update year PR for solutions: $SOLUTIONS_PR_URL"
+            echo "- 🚀 **Solutions Repository PR**: [Merge Update PR]($SOLUTIONS_PR_URL)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Solutions PR could not be found automatically."
+          fi
+          
+          if [ -n "$DATA_PR_URL" ]; then
+            echo "::notice title=Data PR Ready::Please review and merge the Update year PR for data: $DATA_PR_URL"
+            echo "- 💾 **Data Repository PR**: [Merge Update PR]($DATA_PR_URL)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Data PR could not be found automatically."
+          fi
+          
+          if [ -n "$SUBMODULE_PR" ]; then
+            echo "::notice title=Solutions Submodule PR:: $SUBMODULE_PR"
+            echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Solutions Submodule PR could not be found automatically."
+          fi
