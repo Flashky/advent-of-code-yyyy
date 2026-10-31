@@ -63,8 +63,25 @@ jobs:
         run: |
           REPO_NAME="${{ needs.verify.outputs.repo_name }}"
           echo "Creating repository Flashky/$REPO_NAME from template..."
-          gh repo create "Flashky/$REPO_NAME" \
-            --template "Flashky/advent-of-code-yyyy" --public
+          gh repo create "Flashky/$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+
+  create-data-repository:
+    needs: verify
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Create Data Repository from Template
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          echo "Creating private data repository Flashky/$DATA_REPO_NAME from template..."
+          gh repo create "Flashky/$DATA_REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
 
   configure-settings:
     needs: [verify, create-repository]
@@ -173,7 +190,27 @@ jobs:
           echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
           gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
 
-  trigger-init-workflow:
+  configure-data-pat-secrets:
+    needs: [verify, create-data-repository]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Set PAT_TOKEN Secret for Actions on Data Repo
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          
+          echo "Setting PAT_TOKEN secret for Actions on $DATA_REPO_NAME..."
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "Flashky/$DATA_REPO_NAME"
+
+  trigger-solutions-update-year:
     needs: [ verify, configure-settings, configure-pat-secrets, configure-codacy ]
     runs-on: ubuntu-26.04
     steps:
@@ -198,5 +235,33 @@ jobs:
             --repo "Flashky/$REPO_NAME" \
             -f aoc_year="$YEAR" \
             || echo "Warning: Workflow 'Update year' could not be triggered automatically (it might not exist in the template yet)."
+          
+          echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
+
+  trigger-data-update-year:
+    needs: [verify, create-data-repository, configure-data-pat-secrets]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Trigger 'Update year' workflow on Data Repository
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          DATA_REPO_NAME: "${{ needs.verify.outputs.repo_name }}-data"
+        run: |
+          YEAR="${{ needs.verify.outputs.year }}"
+          
+          echo "Waiting a few seconds for data repository initialization..."
+          sleep 5
+          
+          echo "Triggering 'Update year' workflow on $DATA_REPO_NAME..."
+          gh workflow run "Update year" \
+            --repo "Flashky/$DATA_REPO_NAME" \
+            -f aoc_year="$YEAR" \
+            || echo "Warning: Workflow 'Update year' could not be triggered automatically."
           
           echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
