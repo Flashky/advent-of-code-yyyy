@@ -324,8 +324,8 @@ jobs:
           REPO_NAME="${{ needs.verify.outputs.repo_name }}"
           DATA_REPO_NAME="$REPO_NAME-data"
           
-          echo "Waiting 15 seconds for workflows to generate Pull Requests..."
-          sleep 15
+          echo "Waiting 20 seconds for workflows to generate Pull Requests..."
+          sleep 20
           
           echo "Fetching solutions repository PR..."
           SOLUTIONS_PR_URL=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
@@ -355,7 +355,7 @@ jobs:
           fi
           
           if [ -n "$SUBMODULE_PR" ]; then
-            echo "::notice title=Solutions Submodule PR:: $SUBMODULE_PR"
+            echo "::notice title=SPlease review and merge the Submodule PR for solutions:: $SUBMODULE_PR"
             echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR)" >> $GITHUB_STEP_SUMMARY
           else
             echo "::warning::Solutions Submodule PR could not be found automatically."
