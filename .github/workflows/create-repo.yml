@@ -321,7 +321,7 @@ jobs:
 
       - name: Add Data Repository as Submodule
         env:
-          PAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
           
@@ -331,9 +331,8 @@ jobs:
       - name: Create Pull Request for Submodule
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           commit-message: "test: add data repository as submodule"
-          sign-commits: true
           title: "Add data repository as submodule"
           body: |
             This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`.
