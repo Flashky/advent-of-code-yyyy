@@ -70,6 +70,9 @@ jobs:
     needs: [verify, create-repository]
     runs-on: ubuntu-26.04
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Authenticate with GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
