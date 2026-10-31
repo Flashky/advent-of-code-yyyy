@@ -355,7 +355,7 @@ jobs:
           fi
           
           if [ -n "$SUBMODULE_PR" ]; then
-            echo "::notice title=SPlease review and merge the Submodule PR for solutions:: $SUBMODULE_PR"
+            echo "::notice title=Submodule PR Ready::Please review and merge the Submodule PR for solutions:: $SUBMODULE_PR"
             echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR)" >> $GITHUB_STEP_SUMMARY
           else
             echo "::warning::Solutions Submodule PR could not be found automatically."
