@@ -277,6 +277,7 @@ jobs:
           gh auth setup-git
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
+          git config --global url."https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
       - name: Checkout Solutions Repository
         uses: actions/checkout@v7
@@ -292,13 +293,13 @@ jobs:
           DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
           
           echo "Adding private data repository as submodule..."
-          git submodule add -b master "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
+          git submodule add -b master "https://github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
 
       - name: Create Pull Request for Submodule
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PAT_TOKEN }}
-          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
+          #repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
           commit-message: "test: add data repository as submodule"
           title: "Add data repository as submodule"
           body: |
