@@ -17,7 +17,11 @@ jobs:
           # git submodule add -b master "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository_owner }}/${REPO_NAME}-data.git" src/test/resources/inputs
         run: |
           DATA_REPO_NAME="${{ github.event.repository.name }}-data"
-          git submodule add -b master "https://x-access-token:${PAT_TOKEN}@github.com/Flashky/${DATA_REPO_NAME}.git" src/test/resources/inputs src/test/resources/inputs
+          # Configurar Git para inyectar el PAT dinámicamente en tiempo de ejecución
+          git config --global url."https://x-access-token:${PAT_TOKEN}@github.com/Flashky/".insteadOf "https://github.com/Flashky/"
+    
+          echo "Adding private data repository as submodule using clean URL..."
+          git submodule add -b master "https://github.com/Flashky/${DATA_REPO_NAME}.git" src/test/resources/inputs
 
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
