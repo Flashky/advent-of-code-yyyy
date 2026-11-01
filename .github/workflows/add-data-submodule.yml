@@ -16,8 +16,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ secrets.AOC_APP_ID }}
-          private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          # The client ID is accepted as the JWT issuer. The secret must hold the
+          # GitHub App private key (.pem), NOT the OAuth client secret.
+          app-id: ${{ secrets.AOC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AOC_APP_CLIENT_SECRET }}
 
       - uses: actions/checkout@v7
         with:

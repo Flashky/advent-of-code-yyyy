@@ -58,12 +58,12 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_CLIENT_SECRET: ${{ secrets.AOC_APP_CLIENT_SECRET }}
         run: |
           set -uo pipefail
           MISSING=0
-          for name in PAT_TOKEN CODACY_API_TOKEN AOC_APP_ID AOC_APP_PRIVATE_KEY; do
+          for name in PAT_TOKEN CODACY_API_TOKEN AOC_APP_CLIENT_ID AOC_APP_CLIENT_SECRET; do
             if [ -z "${!name:-}" ]; then
               echo "::error title=Missing Secret::$name secret is not set."
               MISSING=1
@@ -164,8 +164,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_CLIENT_SECRET: ${{ secrets.AOC_APP_CLIENT_SECRET }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
           set -euo pipefail
@@ -177,11 +177,11 @@ jobs:
 
           # The GitHub App token signs the commits of the auto-generated PRs,
           # so the new repository needs the App credentials as well.
-          echo "Setting AOC_APP_ID secret..."
-          gh secret set AOC_APP_ID --body "$AOC_APP_ID" --repo "$REPO"
+          echo "Setting AOC_APP_CLIENT_ID secret..."
+          gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$REPO"
 
-          echo "Setting AOC_APP_PRIVATE_KEY secret..."
-          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$REPO"
+          echo "Setting AOC_APP_CLIENT_SECRET secret..."
+          gh secret set AOC_APP_CLIENT_SECRET --body "$AOC_APP_CLIENT_SECRET" --repo "$REPO"
 
   configure-codacy:
     needs: [verify, create-repository]
@@ -272,8 +272,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_CLIENT_SECRET: ${{ secrets.AOC_APP_CLIENT_SECRET }}
           DATA_REPO_NAME: ${{ needs.verify.outputs.data_repo_name }}
         run: |
           set -euo pipefail
@@ -284,11 +284,11 @@ jobs:
 
           # The data repository runs the same 'Update year' workflow, which signs
           # its commits with the GitHub App.
-          echo "Setting AOC_APP_ID secret..."
-          gh secret set AOC_APP_ID --body "$AOC_APP_ID" --repo "$REPO"
+          echo "Setting AOC_APP_CLIENT_ID secret..."
+          gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$REPO"
 
-          echo "Setting AOC_APP_PRIVATE_KEY secret..."
-          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$REPO"
+          echo "Setting AOC_APP_CLIENT_SECRET secret..."
+          gh secret set AOC_APP_CLIENT_SECRET --body "$AOC_APP_CLIENT_SECRET" --repo "$REPO"
 
   trigger-solutions-update-year:
     needs: [verify, configure-settings, configure-secrets, configure-codacy]
