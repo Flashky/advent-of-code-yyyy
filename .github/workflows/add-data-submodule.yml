@@ -16,8 +16,8 @@ jobs:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           # git submodule add -b master "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository_owner }}/${REPO_NAME}-data.git" src/test/resources/inputs
         run: |
-          REPO_NAME="${{ github.event.repository.name }}-data"
-          git submodule add -b master "https://github.com/Flashky/${REPO_NAME}.git" src/test/resources/inputs
+          DATA_REPO_NAME="${{ github.event.repository.name }}-data"
+          git submodule add -b master "https://x-access-token:${PAT_TOKEN}@github.com/Flashky/${DATA_REPO_NAME}.git" src/test/resources/inputs src/test/resources/inputs
 
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
