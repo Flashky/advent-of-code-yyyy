@@ -296,48 +296,20 @@ jobs:
           
           echo "Repository Flashky/$DATA_REPO_NAME successfully created and fully configured!"
 
-  add-data-submodule:
+  trigger-solutions-add-data-submodule:
     needs: [verify, configure-settings, configure-pat-secrets, create-data-repository]
     runs-on: ubuntu-26.04
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
-      - name: Authenticate with GitHub CLI and Configure Git Identity
+      - name: Trigger 'Add Data Submodule' workflow
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          gh auth setup-git
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git config --global url."https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Checkout Solutions Repository
-        uses: actions/checkout@v7
-        with:
-          repository: "Flashky/${{ needs.verify.outputs.repo_name }}"
-          token: ${{ secrets.PAT_TOKEN }}
-          submodules: false
-
-      - name: Add Data Repository as Submodule
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
-          
-          echo "Adding private data repository as submodule..."
-          git submodule add -b master "https://github.com/Flashky/$DATA_REPO_NAME.git" src/test/resources/inputs
-
-      - name: Create Pull Request for Submodule
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          commit-message: "test: add data repository as submodule"
-          title: "Add data repository as submodule"
-          body: |
-            This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`.
-          branch: add-data-submodule
-          base: master
+          echo "Waiting a few seconds for repository initialization..."
+          sleep 5
+          gh workflow run "Add Data Submodule" \
+          --repo "Flashky/$REPO_NAME" \
+          || echo "Warning: Workflow 'Add Data Submodule' could not be triggered automatically."
 
   generate-pull-request-summary:
     needs: [verify, trigger-solutions-update-year, trigger-data-update-year, add-data-submodule]
