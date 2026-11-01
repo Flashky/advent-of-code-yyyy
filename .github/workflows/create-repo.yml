@@ -4,363 +4,431 @@ on:
   workflow_dispatch:
     inputs:
       aoc_year:
-        description: 'Advent of Code year (e.g. 2025)'
+        description: 'Advent of Code year (e.g. 2026)'
         required: true
         type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: create-repo-${{ inputs.aoc_year }}
+  cancel-in-progress: false
+
+env:
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
   verify:
     runs-on: ubuntu-26.04
+    timeout-minutes: 5
     outputs:
       repo_name: ${{ steps.set-vars.outputs.repo_name }}
+      data_repo_name: ${{ steps.set-vars.outputs.data_repo_name }}
       year: ${{ steps.set-vars.outputs.year }}
     steps:
-      - name: Validate Year Format
+      - name: Validate Year
         id: set-vars
         env:
           YEAR: ${{ inputs.aoc_year }}
         run: |
-          if [[ "$YEAR" =~ ^[0-9]{4}$ ]]; then
-            echo "Year '$YEAR' format is valid."
-            echo "year=$YEAR" >> $GITHUB_OUTPUT
-            echo "repo_name=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
-          else
-            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., 2025)."
+          set -euo pipefail
+          CURRENT_YEAR=$(date +%Y)
+          MAX_YEAR=$((CURRENT_YEAR + 1))
+
+          if [[ ! "$YEAR" =~ ^[0-9]{4}$ ]]; then
+            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., $CURRENT_YEAR)."
             exit 1
           fi
 
-      - name: Check Required Secrets
-        run: |
-          MISSING=0
-          if [ -z "${{ secrets.PAT_TOKEN }}" ]; then
-            echo "::error title=Missing Secret::PAT_TOKEN secret is not set."
-            MISSING=1
-          fi
-          if [ -z "${{ secrets.CODACY_API_TOKEN }}" ]; then
-            echo "::error title=Missing Secret::CODACY_API_TOKEN secret is not set."
-            MISSING=1
-          fi
-          if [ "$MISSING" -eq 1 ]; then
+          # 10# forces base 10 so values like 0999 are not parsed as octal
+          YEAR_NUM=$((10#$YEAR))
+
+          if (( YEAR_NUM < 2015 || YEAR_NUM > MAX_YEAR )); then
+            echo "::error title=Invalid Year::Year must be between 2015 and $MAX_YEAR."
             exit 1
           fi
+
+          echo "Year '$YEAR' format is valid."
+          echo "year=$YEAR" >> "$GITHUB_OUTPUT"
+          echo "repo_name=advent-of-code-$YEAR" >> "$GITHUB_OUTPUT"
+          echo "data_repo_name=advent-of-code-$YEAR-data" >> "$GITHUB_OUTPUT"
+
+      - name: Check Required Secrets
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        run: |
+          set -uo pipefail
+          MISSING=0
+          for name in PAT_TOKEN CODACY_API_TOKEN AOC_APP_ID AOC_APP_PRIVATE_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=Missing Secret::$name secret is not set."
+              MISSING=1
+            fi
+          done
+          exit "$MISSING"
 
   create-repository:
     needs: verify
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
       - name: Create Repository from Template
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
-          echo "Creating repository Flashky/$REPO_NAME from template..."
-          gh repo create "Flashky/$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+          set -euo pipefail
+          if gh repo view "$OWNER/$REPO_NAME" >/dev/null 2>&1; then
+            echo "::notice title=Repository exists::$OWNER/$REPO_NAME already exists, skipping creation."
+            exit 0
+          fi
+          echo "Creating repository $OWNER/$REPO_NAME from template..."
+          gh repo create "$OWNER/$REPO_NAME" --template "$OWNER/advent-of-code-yyyy" --public
 
   create-data-repository:
     needs: verify
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
       - name: Create Data Repository from Template
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          DATA_REPO_NAME: ${{ needs.verify.outputs.data_repo_name }}
         run: |
-          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
-          echo "Creating private data repository Flashky/$DATA_REPO_NAME from template..."
-          gh repo create "Flashky/$DATA_REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
+          set -euo pipefail
+          if gh repo view "$OWNER/$DATA_REPO_NAME" >/dev/null 2>&1; then
+            echo "::notice title=Repository exists::$OWNER/$DATA_REPO_NAME already exists, skipping creation."
+            exit 0
+          fi
+          echo "Creating private data repository $OWNER/$DATA_REPO_NAME from template..."
+          gh repo create "$OWNER/$DATA_REPO_NAME" --template "$OWNER/advent-of-code-yyyy-data" --private
 
   configure-settings:
     needs: [verify, create-repository]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
+        with:
+          persist-credentials: false
 
       - name: Enable Auto-Merge
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          set -euo pipefail
           echo "Enabling auto-merge for $REPO_NAME..."
-          gh api "repos/Flashky/$REPO_NAME" \
+          gh api "repos/$OWNER/$REPO_NAME" \
             -X PATCH \
             -F allow_auto_merge=true
 
       - name: Allow Actions to Create and Approve PRs
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          set -euo pipefail
           echo "Configuring workflow permissions for $REPO_NAME..."
-          gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
             -F default_workflow_permissions="write" \
             -F can_approve_pull_request_reviews=true
 
       - name: Import Branch Protection Ruleset
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          set -euo pipefail
           RULESET_FILE=".github/settings/branch-protection-ruleset.json"
-          
+
           if [ -f "$RULESET_FILE" ]; then
             echo "Importing branch protection ruleset into $REPO_NAME..."
-            gh api "repos/Flashky/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
+            gh api "repos/$OWNER/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
             echo "Ruleset successfully applied!"
           else
             echo "::warning title=Ruleset Missing::Ruleset file not found at $RULESET_FILE, skipping."
           fi
 
-  configure-pat-secrets:
+  configure-secrets:
     needs: [verify, create-repository]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
-      - name: Set PAT_TOKEN Secret for Actions and Dependabot
+      - name: Set Secrets
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
-          
-          echo "Setting PAT_TOKEN secret for Actions..."
-          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "Flashky/$REPO_NAME"
-          
-          echo "Setting PAT_TOKEN secret for Dependabot..."
-          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
+          set -euo pipefail
+          REPO="$OWNER/$REPO_NAME"
+
+          echo "Setting PAT_TOKEN secret for Actions and Dependabot..."
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "$REPO"
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$REPO"
+
+          # The GitHub App token signs the commits of the auto-generated PRs,
+          # so the new repository needs the App credentials as well.
+          echo "Setting AOC_APP_ID secret..."
+          gh secret set AOC_APP_ID --body "$AOC_APP_ID" --repo "$REPO"
+
+          echo "Setting AOC_APP_PRIVATE_KEY secret..."
+          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$REPO"
 
   configure-codacy:
     needs: [verify, create-repository]
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
+        with:
+          persist-credentials: false
 
       - name: Make scripts executable
         run: chmod +x .github/scripts/codacy-add-repository.sh .github/scripts/codacy-create-token.sh
 
+      # Registration is idempotent: an already registered repository makes the
+      # script fail, so failures are tolerated here and validated by the token
+      # generation step below.
       - name: Register Repository in Codacy
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
-          bash .github/scripts/codacy-add-repository.sh "$REPO_NAME"
+          set -uo pipefail
+          for attempt in $(seq 1 6); do
+            if bash .github/scripts/codacy-add-repository.sh "$REPO_NAME"; then
+              echo "Repository registered."
+              break
+            fi
+            echo "Attempt $attempt failed; retrying in 10s..."
+            sleep 10
+          done
 
       - name: Generate and Configure Codacy Project Token
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          set -uo pipefail
+          PROJECT_TOKEN=""
+          for attempt in $(seq 1 6); do
+            if PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$REPO_NAME") && [ -n "$PROJECT_TOKEN" ]; then
+              break
+            fi
+            PROJECT_TOKEN=""
+            echo "Attempt $attempt failed; retrying in 10s..."
+            sleep 10
+          done
 
-          if PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$REPO_NAME"); then
-            echo "Token successfully generated!"
-          else
+          if [ -z "$PROJECT_TOKEN" ]; then
             echo "::error title=Codacy Token Error::Failed to generate Codacy token."
             exit 1
           fi
-          
+
+          echo "Token successfully generated!"
+
           # Mask and set secrets in the new repository
           echo "::add-mask::$PROJECT_TOKEN"
-          
+
           echo "Setting CODACY_PROJECT_TOKEN secret for Actions..."
-          gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --repo "Flashky/$REPO_NAME"
-          
+          gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
+
           echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
-          gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "Flashky/$REPO_NAME"
+          gh secret set CODACY_PROJECT_TOKEN --body "$PROJECT_TOKEN" --app dependabot --repo "$OWNER/$REPO_NAME"
 
   configure-data-settings:
     needs: [verify, create-data-repository]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
       - name: Allow Actions to Create and Approve PRs on Data Repo
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          DATA_REPO_NAME: ${{ needs.verify.outputs.data_repo_name }}
         run: |
-          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
+          set -euo pipefail
           echo "Configuring workflow permissions for $DATA_REPO_NAME..."
-          gh api --method PUT "repos/Flashky/$DATA_REPO_NAME/actions/permissions/workflow" \
+          gh api --method PUT "repos/$OWNER/$DATA_REPO_NAME/actions/permissions/workflow" \
             -F default_workflow_permissions="write" \
             -F can_approve_pull_request_reviews=true
 
-  configure-data-pat-secrets:
+  configure-data-secrets:
     needs: [verify, create-data-repository]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
-      - name: Set PAT_TOKEN Secret for Actions on Data Repo
+      - name: Set Secrets on Data Repo
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          DATA_REPO_NAME: ${{ needs.verify.outputs.data_repo_name }}
         run: |
-          DATA_REPO_NAME="${{ needs.verify.outputs.repo_name }}-data"
-          
+          set -euo pipefail
+          REPO="$OWNER/$DATA_REPO_NAME"
+
           echo "Setting PAT_TOKEN secret for Actions on $DATA_REPO_NAME..."
-          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "Flashky/$DATA_REPO_NAME"
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --repo "$REPO"
+
+          # The data repository runs the same 'Update year' workflow, which signs
+          # its commits with the GitHub App.
+          echo "Setting AOC_APP_ID secret..."
+          gh secret set AOC_APP_ID --body "$AOC_APP_ID" --repo "$REPO"
+
+          echo "Setting AOC_APP_PRIVATE_KEY secret..."
+          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$REPO"
 
   trigger-solutions-update-year:
-    needs: [ verify, configure-settings, configure-pat-secrets, configure-codacy ]
+    needs: [verify, configure-settings, configure-secrets, configure-codacy]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
       - name: Trigger 'Update year' workflow
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name }}
+          YEAR: ${{ needs.verify.outputs.year }}
         run: |
-          YEAR="${{ needs.verify.outputs.year }}"
-          
-          echo "Waiting a few seconds for repository initialization..."
-          sleep 5
-          
-          echo "Triggering 'Update year' workflow..."
-          gh workflow run "Update year" \
-            --repo "Flashky/$REPO_NAME" \
-            -f aoc_year="$YEAR" \
-            || echo "Warning: Workflow 'Update year' could not be triggered automatically (it might not exist in the template yet)."
-          
-          echo "Repository Flashky/$REPO_NAME successfully created and fully configured!"
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if gh workflow run "Update year" --repo "$OWNER/$REPO_NAME" -f aoc_year="$YEAR"; then
+              echo "::notice title=Workflow dispatched::'Update year' dispatched on $OWNER/$REPO_NAME."
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in 5s..."
+            sleep 5
+          done
+          echo "::error title=Dispatch failed::Could not dispatch 'Update year' on $OWNER/$REPO_NAME."
+          exit 1
 
   trigger-data-update-year:
-    needs: [verify, create-data-repository, configure-data-settings, configure-data-pat-secrets]
+    needs: [verify, create-data-repository, configure-data-settings, configure-data-secrets]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          gh auth setup-git
-
       - name: Trigger 'Update year' workflow on Data Repository
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          DATA_REPO_NAME: "${{ needs.verify.outputs.repo_name }}-data"
+          DATA_REPO_NAME: ${{ needs.verify.outputs.data_repo_name }}
+          YEAR: ${{ needs.verify.outputs.year }}
         run: |
-          YEAR="${{ needs.verify.outputs.year }}"
-          
-          echo "Waiting a few seconds for data repository initialization..."
-          sleep 10
-          
-          echo "Triggering 'Update year' workflow on $DATA_REPO_NAME..."
-          gh workflow run "Update year" \
-            --repo "Flashky/$DATA_REPO_NAME" \
-            -f aoc_year="$YEAR" \
-            || echo "Warning: Workflow 'Update year' could not be triggered automatically."
-          
-          echo "Repository Flashky/$DATA_REPO_NAME successfully created and fully configured!"
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if gh workflow run "Update year" --repo "$OWNER/$DATA_REPO_NAME" -f aoc_year="$YEAR"; then
+              echo "::notice title=Workflow dispatched::'Update year' dispatched on $OWNER/$DATA_REPO_NAME."
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in 5s..."
+            sleep 5
+          done
+          echo "::error title=Dispatch failed::Could not dispatch 'Update year' on $OWNER/$DATA_REPO_NAME."
+          exit 1
 
+  # Chained after 'Update year' so both pull requests do not race against each
+  # other, and after Codacy so the required checks exist when the PR opens.
   trigger-solutions-add-data-submodule:
-    needs: [verify, configure-settings, configure-pat-secrets, create-data-repository]
+    needs: [verify, configure-settings, configure-secrets, configure-codacy, create-data-repository, trigger-solutions-update-year]
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
       - name: Trigger 'Add Data Submodule' workflow
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name }}
         run: |
-          echo "Waiting a few seconds for repository initialization..."
-          sleep 5
-          gh workflow run "Add Data Submodule" \
-          --repo "Flashky/$REPO_NAME" \
-          || echo "Warning: Workflow 'Add Data Submodule' could not be triggered automatically."
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if gh workflow run "Add Data Submodule" --repo "$OWNER/$REPO_NAME"; then
+              echo "::notice title=Workflow dispatched::'Add Data Submodule' dispatched on $OWNER/$REPO_NAME."
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in 5s..."
+            sleep 5
+          done
+          echo "::error title=Dispatch failed::Could not dispatch 'Add Data Submodule' on $OWNER/$REPO_NAME."
+          exit 1
 
   generate-pull-request-summary:
     needs: [verify, trigger-solutions-update-year, trigger-data-update-year, trigger-solutions-add-data-submodule]
+    if: always()
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
     steps:
-      - name: Authenticate with GitHub CLI
+      - name: Find and Annotate Pull Requests
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name }}
+          DATA_REPO_NAME: ${{ needs.verify.outputs.data_repo_name }}
         run: |
-          gh auth setup-git
+          set -uo pipefail
 
-      - name: Find and Annotate Update Year PRs
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
-          DATA_REPO_NAME="$REPO_NAME-data"
-          
-          echo "Waiting 20 seconds for workflows to generate Pull Requests..."
-          sleep 20
-          
-          echo "Fetching solutions repository PR..."
-          SOLUTIONS_PR_URL=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
-          
-          echo "Fetching data repository PR..."
-          DATA_PR_URL=$(gh pr list --repo "Flashky/$DATA_REPO_NAME" --state open --search "Update year" --json url --jq '.[0].url // empty')
-          
-          echo "Fetching solutions Submodule PR..."
-          SUBMODULE_PR=$(gh pr list --repo "Flashky/$REPO_NAME" --state open --search "Add data repository as submodule" --json url --jq '.[0].url // empty')
-          
-          echo "### 🎄 Advent of Code Setup Summary" >> $GITHUB_STEP_SUMMARY
-          echo "Repositories have been successfully created, configured, and initialized." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
+          {
+            echo "### 🎄 Advent of Code Setup Summary"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -z "${REPO_NAME:-}" ]; then
+            echo "::warning title=Setup incomplete::Repositories were not created, nothing to summarize."
+            echo "- ⚠️ Repository creation did not complete." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          find_pr() {
+            local repo="$1"
+            local head="$2"
+            local url=""
+            for attempt in $(seq 1 12); do
+              url=$(gh pr list --repo "$repo" --state open --head "$head" --json url --jq '.[0].url // empty' 2>/dev/null || true)
+              if [ -n "$url" ]; then
+                printf '%s' "$url"
+                return 0
+              fi
+              sleep 10
+            done
+            return 1
+          }
+
+          echo "Looking for the solutions repository PR..."
+          SOLUTIONS_PR_URL=$(find_pr "$OWNER/$REPO_NAME" "update-year" || true)
+
+          echo "Looking for the data repository PR..."
+          DATA_PR_URL=$(find_pr "$OWNER/$DATA_REPO_NAME" "update-year" || true)
+
+          echo "Looking for the solutions submodule PR..."
+          SUBMODULE_PR_URL=$(find_pr "$OWNER/$REPO_NAME" "add-data-submodule" || true)
+
           if [ -n "$SOLUTIONS_PR_URL" ]; then
             echo "::notice title=Solutions PR Ready::Please review and merge the Update year PR for solutions: $SOLUTIONS_PR_URL"
-            echo "- 🚀 **Solutions Repository PR**: [Merge Update PR]($SOLUTIONS_PR_URL)" >> $GITHUB_STEP_SUMMARY
+            echo "- 🚀 **Solutions Repository PR**: [Merge Update PR]($SOLUTIONS_PR_URL)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::warning::Solutions PR could not be found automatically."
+            echo "::warning title=Solutions PR missing::Solutions PR could not be found automatically."
+            echo "- ⚠️ Solutions Repository PR not found." >> "$GITHUB_STEP_SUMMARY"
           fi
-          
+
           if [ -n "$DATA_PR_URL" ]; then
             echo "::notice title=Data PR Ready::Please review and merge the Update year PR for data: $DATA_PR_URL"
-            echo "- 💾 **Data Repository PR**: [Merge Update PR]($DATA_PR_URL)" >> $GITHUB_STEP_SUMMARY
+            echo "- 💾 **Data Repository PR**: [Merge Update PR]($DATA_PR_URL)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::warning::Data PR could not be found automatically."
+            echo "::warning title=Data PR missing::Data PR could not be found automatically."
+            echo "- ⚠️ Data Repository PR not found." >> "$GITHUB_STEP_SUMMARY"
           fi
-          
-          if [ -n "$SUBMODULE_PR" ]; then
-            echo "::notice title=Submodule PR Ready::Please review and merge the Submodule PR for solutions:: $SUBMODULE_PR"
-            echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR)" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "$SUBMODULE_PR_URL" ]; then
+            echo "::notice title=Submodule PR Ready::Please review and merge the Submodule PR for solutions: $SUBMODULE_PR_URL"
+            echo "- 🔗 **Solutions - Submodule PR**: [Merge PR]($SUBMODULE_PR_URL)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::warning::Solutions Submodule PR could not be found automatically."
+            echo "::warning title=Submodule PR missing::Solutions Submodule PR could not be found automatically."
+            echo "- ⚠️ Solutions Submodule PR not found." >> "$GITHUB_STEP_SUMMARY"
           fi

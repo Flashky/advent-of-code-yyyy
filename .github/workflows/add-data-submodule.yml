@@ -1,32 +1,52 @@
 name: Add Data Submodule
 on:
   workflow_dispatch:
-
+permissions:
+  contents: read
+concurrency:
+  group: add-data-submodule
+  cancel-in-progress: false
 jobs:
   add-submodule:
     runs-on: ubuntu-26.04
-    #permissions:
-    #  contents: write
-    #  pull-requests: write
+    timeout-minutes: 15
     steps:
+      # GitHub App token is required to sign commits (PAT tokens cannot sign them)
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.AOC_APP_ID }}
+          private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Add Data Repository as Submodule
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          # git submodule add -b master "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository_owner }}/${REPO_NAME}-data.git" src/test/resources/inputs
         run: |
+          set -euo pipefail
           DATA_REPO_NAME="${{ github.event.repository.name }}-data"
-          # Configurar Git para inyectar el PAT dinámicamente en tiempo de ejecución
-          git config --global url."https://x-access-token:${PAT_TOKEN}@github.com/Flashky/".insteadOf "https://github.com/Flashky/"
-    
-          echo "Adding private data repository as submodule using clean URL..."
-          git submodule add -b master "https://github.com/Flashky/${DATA_REPO_NAME}.git" src/test/resources/inputs
+
+          if grep -q "src/test/resources/inputs" .gitmodules 2>/dev/null; then
+            echo "::notice title=Submodule already present::Nothing to do."
+            exit 0
+          fi
+
+          # Inject the PAT at runtime so the private data repository can be cloned
+          # while .gitmodules keeps a clean, token-free URL.
+          git config --global url."https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository_owner }}/".insteadOf "https://github.com/${{ github.repository_owner }}/"
+
+          echo "Adding private data repository as submodule..."
+          git submodule add -b master "https://github.com/${{ github.repository_owner }}/${DATA_REPO_NAME}.git" src/test/resources/inputs
 
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           commit-message: "test: add data repository as submodule"
           sign-commits: true
           title: "Add data repository as submodule"
