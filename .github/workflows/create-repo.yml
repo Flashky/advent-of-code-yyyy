@@ -312,7 +312,7 @@ jobs:
           || echo "Warning: Workflow 'Add Data Submodule' could not be triggered automatically."
 
   generate-pull-request-summary:
-    needs: [verify, trigger-solutions-update-year, trigger-data-update-year, add-data-submodule]
+    needs: [verify, trigger-solutions-update-year, trigger-data-update-year, trigger-solutions-add-data-submodule]
     runs-on: ubuntu-26.04
     steps:
       - name: Authenticate with GitHub CLI
