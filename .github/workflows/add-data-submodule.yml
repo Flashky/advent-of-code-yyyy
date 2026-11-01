@@ -1,4 +1,4 @@
-name: Add data submodule
+name: Add Data Submodule
 on:
   workflow_dispatch:
 
