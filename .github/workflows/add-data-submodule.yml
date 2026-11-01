@@ -31,3 +31,4 @@ jobs:
           sign-commits: true
           title: "Add data repository as submodule"
           body: "This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`."
+          branch: add-data-submodule
