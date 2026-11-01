@@ -1,0 +1,29 @@
+name: Add data submodule
+on:
+  workflow_dispatch:
+
+jobs:
+  add-submodule:
+    runs-on: ubuntu-26.04
+    #permissions:
+    #  contents: write
+    #  pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Add Data Repository as Submodule
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          # git submodule add -b master "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository_owner }}/${REPO_NAME}-data.git" src/test/resources/inputs
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}-data"
+          git submodule add -b master "https://github.com/${REPO_NAME}.git" src/test/resources/inputs
+
+      - name: Open Pull Request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "test: add data repository as submodule"
+          sign-commits: true
+          title: "Add data repository as submodule"
+          body: "This PR automatically adds the private data repository as a submodule under `src/test/resources/inputs`."
