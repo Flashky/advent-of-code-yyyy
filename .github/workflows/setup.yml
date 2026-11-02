@@ -78,7 +78,7 @@ jobs:
       - name: Update Repository Description
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh repo edit -d "Advent of Code ${{ env.AOC_YEAR }}"
+        run: gh repo edit -d "🎄 Advent of Code ${{ env.AOC_YEAR }}"
 
         # Update repository topics
       - name: Update Repository Topics
