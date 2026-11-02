@@ -60,9 +60,64 @@ jobs:
           done
           exit "$MISSING"
 
+  # Bootstraps the data repository, initializing any needed tokens and basic configurations.
+  bootstrap-data-repo:
+    needs: verify
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Create Data Repository
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "Creating repository $OWNER/$REPO_NAME from template..."
+          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
+
+      - name: Configure Secrets and Variables
+        env:
+          # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          YEAR: ${{ needs.verify.outputs.year }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER:  ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
+          gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
+          
+          echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
+          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
+          
+          echo "Setting AOC_YEAR variable for workflows..."
+          gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
+          
+      - name: Enable Auto-Merge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER:  ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          echo "Enabling auto-merge for $REPO_NAME..."
+          gh api "repos/$OWNER/$REPO_NAME" -X PATCH  -F allow_auto_merge=true
+
+      - name: Allow Actions to Create and Approve PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER:  ${{ github.repository_owner }}
+        run: |
+          echo "Configuring workflow permissions for $REPO_NAME..."
+          gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
+
   # Bootstraps the solutions repository, initializing any needed tokens and basic configurations.
   bootstrap-solutions-repo:
-    needs: verify
+    needs: [ verify, bootstrap-data-repo ]
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
