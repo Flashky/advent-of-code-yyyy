@@ -81,7 +81,7 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           echo "Creating repository $OWNER/$REPO_NAME from template..."
-          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
+          gh repo create "$OWNER/$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
 
       - name: Configure Secrets and Variables
         env:
