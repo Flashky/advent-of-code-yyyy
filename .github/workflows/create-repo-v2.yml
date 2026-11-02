@@ -60,7 +60,8 @@ jobs:
           done
           exit "$MISSING"
 
-  create-solutions-repository:
+  # Scaffolds and bootstraps the solutions repository, initializing any needed tokens.
+  bootstrap-solutions-repository:
     needs: verify
     runs-on: ubuntu-26.04
     steps:
@@ -75,6 +76,9 @@ jobs:
           echo "Creating repository Flashky/$REPO_NAME from template..."
           gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
 
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/codacy-add-repository.sh .github/scripts/codacy-create-token.sh
+
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -83,6 +87,25 @@ jobs:
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
+      - name: Register Repository in Codacy
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        run: bash .github/scripts/codacy-add-repository.sh "$REPO_NAME"
+
+      - name: Generate Codacy Project Token
+        id: codacy-token
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        run: |
+          set -euo pipefail
+
+          PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$REPO_NAME")
+          echo "::add-mask::$PROJECT_TOKEN"
+          echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
+
       - name: Configure Secrets
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
@@ -90,6 +113,7 @@ jobs:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
           OWNER:  ${{ github.repository_owner }}
         run: |
@@ -99,5 +123,9 @@ jobs:
           echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
           gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
           
+          echo "Setting CODACY_PROJECT_TOKEN secret for Actions..."
+          gh secret set CODACY_PROJECT_TOKEN --body "$CODACY_PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
+          
           echo "Setting PAT_TOKEN secret for Dependabot..."
           gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$OWNER/$REPO_NAME"
+          

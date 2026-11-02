@@ -46,4 +46,7 @@ if [ -s "$RESPONSE_FILE" ]; then
 else
   echo "$HTTP_STATUS Error: Empty response from server."
 fi
+
+echo "::error title=Codacy Token Error::Failed to generate Codacy token."
+
 exit 1
