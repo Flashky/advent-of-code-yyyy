@@ -74,15 +74,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ${{ needs.verify.outputs.app-token }}
-        run: |
-          gh auth setup-git
-
       - name: Create Repository from Template
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ needs.verify.outputs.app-token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           echo "Creating repository Flashky/$REPO_NAME from template..."
