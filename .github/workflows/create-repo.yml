@@ -1,4 +1,4 @@
-name: Create AoC repository v2
+name: Create AoC repository
 
 on:
   workflow_dispatch:
