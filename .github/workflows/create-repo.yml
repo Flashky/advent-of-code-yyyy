@@ -257,3 +257,25 @@ jobs:
           gh workflow run "Setup" --repo "$OWNER/$REPO_NAME"
           echo "Setup workflow successfully triggered!"
 
+  # Summary job
+  summary:
+    runs-on: ubuntu-26.04
+    needs: [bootstrap-data-repo, bootstrap-solutions-repo]
+    if: always()
+    steps:
+      - name: Generate Deployment Summary
+        env:
+          YEAR: ${{ needs.verify.outputs.year }}
+          SOLUTIONS_REPO: ${{ needs.verify.outputs.repo_name_solutions }}
+          DATA_REPO: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "### 🚀 Advent of Code $YEAR workshop is ready!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Se han inicializado correctamente los repositorios para el año **$YEAR**:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎄 **Solutions repository:** [$SOLUTIONS_REPO](https://github.com/$OWNER/$SOLUTIONS_REPO)" >> $GITHUB_STEP_SUMMARY
+          echo "- 💾 **Data repository:** [$DATA_REPO](https://github.com/$OWNER/$DATA_REPO)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please help the elves to save the Christmas another year!" >> $GITHUB_STEP_SUMMARY
+
