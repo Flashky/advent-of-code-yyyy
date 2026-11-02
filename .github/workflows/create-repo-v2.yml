@@ -1,0 +1,61 @@
+name: Create AoC repository v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      aoc_year:
+        description: 'Advent of Code year (e.g. 2025)'
+        required: true
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-26.04
+    outputs:
+      year: ${{ steps.set-vars.outputs.year }}
+      repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
+      repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
+    steps:
+      - name: Validate Year Format
+        id: set-vars
+        env:
+          YEAR: ${{ inputs.aoc_year }}
+        run: |
+          set -euo pipefail
+          CURRENT_YEAR=$(date +%Y)
+          MAX_YEAR=$((CURRENT_YEAR + 1))
+          
+          if [[ ! "$YEAR" =~ ^[0-9]{4}$ ]]; then
+            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., $CURRENT_YEAR)."
+            exit 1
+          fi
+          
+          # 10# forces base 10 so values like 0999 are not parsed as octal
+          YEAR_NUM=$((10#$YEAR))
+
+          if (( YEAR_NUM < 2015 || YEAR_NUM > MAX_YEAR )); then
+            echo "::error title=Invalid Year::Year must be between 2015 and $MAX_YEAR."
+            exit 1
+          fi
+          
+          echo "Year '$YEAR' format is valid."
+          echo "year=$YEAR" >> $GITHUB_OUTPUT
+          echo "repo_name_solutions=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
+          echo "repo_name_data=advent-of-code-$YEAR-data" >> $GITHUB_OUTPUT
+
+      - name: Check Required Secrets
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_CLIENT_SECRET: ${{ secrets.AOC_APP_CLIENT_SECRET }}
+        run: |
+          set -uo pipefail
+          MISSING=0
+          for name in PAT_TOKEN CODACY_API_TOKEN AOC_APP_CLIENT_ID AOC_APP_CLIENT_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=Missing Secret::$name secret is not set."
+              MISSING=1
+            fi
+          done
+          exit "$MISSING"
