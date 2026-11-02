@@ -1,14 +1,9 @@
 name: Setup
 on:
   workflow_dispatch:
-    inputs:
-      aoc_year:
-        description: 'Advent of Code year (e.g. 2025)'
-        required: false
-        type: string
 
 env:
-  AOC_YEAR: ${{ github.event.inputs.aoc_year || vars.AOC_YEAR }}
+  AOC_YEAR: ${{ vars.AOC_YEAR }}
 
 jobs:
   verify:
@@ -20,7 +15,7 @@ jobs:
       - name: Validate Year Format
         id: set-vars
         env:
-          YEAR: ${{ github.event.inputs.aoc_year || vars.AOC_YEAR }}
+          YEAR: ${{ vars.AOC_YEAR }}
         run: |
           set -euo pipefail
           CURRENT_YEAR=$(date +%Y)
