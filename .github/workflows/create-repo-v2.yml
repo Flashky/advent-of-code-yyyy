@@ -15,7 +15,7 @@ jobs:
       year: ${{ steps.set-vars.outputs.year }}
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
-      app-token: ${{ steps.app-token.outputs.token }}
+      app_token: ${{ steps.app-token.outputs.token }}
     steps:
       - name: Validate Year Format
         id: set-vars
@@ -67,6 +67,7 @@ jobs:
         with:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
 
   create-solutions-repository:
     needs: verify
@@ -77,7 +78,7 @@ jobs:
 
       - name: Create Repository from Template
         env:
-          GH_TOKEN: ${{ needs.verify.outputs.app-token }}
+          GH_TOKEN: ${{ needs.verify.outputs.app_token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           echo "Creating repository Flashky/$REPO_NAME from template..."
