@@ -79,6 +79,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+          OWNER: ${{ github.repository_owner }}
         run: |
+          echo "Owner: $OWNER"
           echo "Creating repository Flashky/$REPO_NAME from template..."
-          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+          gh repo create "Flashky/$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public --owner $OWNER
