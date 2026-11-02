@@ -97,7 +97,7 @@ jobs:
           gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
-          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/REPO_NAME"
+          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting PAT_TOKEN secret for Dependabot..."
           gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$OWNER/$REPO_NAME"
