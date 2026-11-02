@@ -91,12 +91,13 @@ jobs:
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+          OWNER:  ${{ github.repository_owner }}
         run: |
           echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
-          gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$REPO_NAME"
+          gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
-          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "REPO_NAME"
+          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/REPO_NAME"
           
           echo "Setting PAT_TOKEN secret for Dependabot..."
-          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$REPO_NAME"
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$OWNER/$REPO_NAME"
