@@ -123,6 +123,18 @@ jobs:
             -F default_workflow_permissions="write" \
             -F can_approve_pull_request_reviews=true
 
+      - name: Trigger Setup Workflow
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          
+          echo "Triggering 'Setup' workflow in $OWNER/$REPO_NAME..."
+          gh workflow run "Setup" --repo "$OWNER/$REPO_NAME"
+          echo "Setup workflow successfully triggered!"
+
   # Bootstraps the solutions repository, initializing any needed tokens and basic configurations.
   bootstrap-solutions-repo:
     needs: [ verify, bootstrap-data-repo ]
