@@ -270,12 +270,11 @@ jobs:
           DATA_REPO: ${{ needs.verify.outputs.repo_name_data }}
           OWNER: ${{ github.repository_owner }}
         run: |
-          echo "### 🚀 Advent of Code $YEAR workshop is ready." >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Advent of Code $YEAR workshop is ready." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Please help the elves to save the Christmas another year!" >> $GITHUB_STEP_SUMMARY
+          echo "> *Please help the elves to save the Christmas another year!* 🎅✨" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- 🎄 **Solutions repository:** [$SOLUTIONS_REPO](https://github.com/$OWNER/$SOLUTIONS_REPO)" >> $GITHUB_STEP_SUMMARY
           echo "- 💾 **Data repository:** [$DATA_REPO](https://github.com/$OWNER/$DATA_REPO)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           
 
