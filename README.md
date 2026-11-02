@@ -45,16 +45,27 @@ The workflows will create two repositories:
 
 ## Cloning this repository
 
-Without data repository:
-
-```bash
-git clone https://github.com/Flashky/advent-of-code-{year}.git
-```
-
-Including data repository:
+Clone with data repository:
 
 ```bash
 git clone https://github.com/Flashky/advent-of-code-{year}.git --recurse-submodules
+```
+
+
+## Update local repository
+
+Use the following command to update the local repo if there are any remote changes:
+
+```bash
+git submodule update --recursive --remote
+```
+
+## Re-attach local repository
+
+If the local repo becomes detached, execute:
+
+```bash
+git checkout master
 ```
 
 ## About
