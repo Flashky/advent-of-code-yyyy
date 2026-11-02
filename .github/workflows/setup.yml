@@ -12,6 +12,14 @@ jobs:
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
     steps:
+      - name: Prevent Execution on Template Repository
+        run: |
+          set -euo pipefail
+          REPO_NAME="${{ github.event.repository.name }}"
+          if [[ "$REPO_NAME" == *"yyyy"* ]]; then
+            echo "::error title=Template Restriction::The Setup workflow cannot be executed directly from the template repository ($REPO_NAME)."
+            exit 1
+          fi
       - name: Validate Year Format
         id: set-vars
         env:
