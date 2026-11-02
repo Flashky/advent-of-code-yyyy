@@ -15,6 +15,7 @@ jobs:
       year: ${{ steps.set-vars.outputs.year }}
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
+      app-token: ${{ steps.app-token.outputs.token }}
     steps:
       - name: Validate Year Format
         id: set-vars
