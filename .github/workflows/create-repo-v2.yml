@@ -106,7 +106,7 @@ jobs:
           echo "::add-mask::$PROJECT_TOKEN"
           echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
 
-      - name: Configure Secrets
+      - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -114,6 +114,7 @@ jobs:
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
+          YEAR: ${{ needs.verify.outputs.year }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
           OWNER:  ${{ github.repository_owner }}
         run: |
@@ -129,6 +130,9 @@ jobs:
           
           echo "Setting PAT_TOKEN secret for Dependabot..."
           gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$OWNER/$REPO_NAME"
+          
+          echo "Setting AOC_YEAR variable for workflows..."
+          gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
 
       - name: Enable Auto-Merge
         env:

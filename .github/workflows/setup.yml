@@ -4,28 +4,33 @@ on:
     inputs:
       aoc_year:
         description: 'Advent of Code year (e.g. 2025)'
-        required: true
+        required: false
         type: string
+
 env:
-  AOC_YEAR: ${{ github.event.inputs.aoc_year }}
+  AOC_YEAR: ${{ github.event.inputs.aoc_year || vars.AOC_YEAR }}
 
 jobs:
   verify:
     runs-on: ubuntu-26.04
     outputs:
-      year: ${{ steps.set-vars.outputs.year }}
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
     steps:
       - name: Validate Year Format
         id: set-vars
         env:
-          YEAR: ${{ inputs.aoc_year }}
+          YEAR: ${{ github.event.inputs.aoc_year || vars.AOC_YEAR }}
         run: |
           set -euo pipefail
           CURRENT_YEAR=$(date +%Y)
           MAX_YEAR=$((CURRENT_YEAR + 1))
 
+          if [[ -z "$YEAR" ]]; then
+            echo "::error title=Missing Year::No year input provided and AOC_YEAR variable is not set."
+            exit 1
+          fi
+          
           if [[ ! "$YEAR" =~ ^[0-9]{4}$ ]]; then
             echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., $CURRENT_YEAR)."
             exit 1
@@ -40,7 +45,6 @@ jobs:
           fi
 
           echo "Year '$YEAR' format is valid."
-          echo "year=$YEAR" >> $GITHUB_OUTPUT
           echo "repo_name_solutions=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
           echo "repo_name_data=advent-of-code-$YEAR-data" >> $GITHUB_OUTPUT
 
