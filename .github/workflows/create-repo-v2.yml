@@ -130,7 +130,8 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
-          
+          echo "Waiting for GitHub to index workflows in $REPO_NAME..."
+          sleep 5
           echo "Triggering 'Setup' workflow in $OWNER/$REPO_NAME..."
           gh workflow run "Setup" --repo "$OWNER/$REPO_NAME"
           echo "Setup workflow successfully triggered!"
