@@ -15,8 +15,6 @@ The workflows will create two repositories:
 
 **Enjoy your new Advent of Code edition!**
 
-**Enjoy your new Advent of Code edition!**
-
 ---
 
 - [Day 1](https://github.com/Flashky/advent-of-code-{year}/tree/master/src/main/java/com/adventofcode/flashk/day01)
