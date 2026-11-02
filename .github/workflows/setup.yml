@@ -116,9 +116,12 @@ jobs:
 
       # Add data submodule
       - name: Add Data Submodule
+        env:
+          OWNER:  ${{ github.repository_owner }}
+          REPO_NAME:  ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           echo "Adding private data repository as submodule using clean URL..."
-          git submodule add -b master "https://github.com/${OWNER}/${DATA_REPO_NAME}.git" src/test/resources/inputs
+          git submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
 
       # Open Pull Request
       - name: Open Pull Request
