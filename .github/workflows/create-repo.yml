@@ -72,7 +72,7 @@ jobs:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-
+          repositories: "advent-of-code-yyyy, ${{ needs.verify.outputs.repo_name_solutions }}"
       - name: Create Data Repository
         env:
           #GH_TOKEN: ${{ secrets.PAT_TOKEN }}
