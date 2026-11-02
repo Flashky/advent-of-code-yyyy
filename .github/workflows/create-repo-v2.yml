@@ -167,3 +167,20 @@ jobs:
           echo "Importing branch protection ruleset into $REPO_NAME..."
           gh api "repos/$OWNER/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
           echo "Ruleset successfully applied!"
+
+      - name: Trigger Setup Workflow
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          YEAR: ${{ needs.verify.outputs.year }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          
+          echo "Triggering 'Setup' workflow in $OWNER/$REPO_NAME for year $YEAR..."
+          gh workflow run "Setup" \
+            --repo "$OWNER/$REPO_NAME" \
+            -f aoc_year="$YEAR"
+          
+          echo "Setup workflow successfully triggered!"
+
