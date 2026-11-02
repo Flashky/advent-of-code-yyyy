@@ -2,24 +2,18 @@
 
 ## ⚙️ Quick Start
 
-This guide will help you quickly configure a new repository from this template for the current year's Advent of Code.
+Scaffold your Advent of Code repository for Java in three easy steps:
 
-Just run the [AoC Repository Creations](https://github.com/Flashky/advent-of-code-yyyy/actions/workflows/create-repo.yml) workflow.
+1.  ▶️ Run the [AoC Repository Creations](https://github.com/Flashky/advent-of-code-yyyy/actions/workflows/create-repo.yml) workflow.
+2. 🏆 Add your [Codacy](https://app.codacy.com) `code quality` and `coverage` badges to this `README.md`.
+3. Remove these setup instructions from the ``README.md``.
 
-This workflow will setup both a private data repository and a public solutions repository.
+The workflows will create two repositories:
 
-## ✅ Final Steps
+- **advent-of-code-yyyy**: for the solutions (public)
+- **advent-of-code-yyyy-data**: for the inputs (private)
 
-### 🏆 Codacy Badges
-
-1.  Go to [Codacy](https://app.codacy.com) and open your repository.
-2.  Open **Settings / General** and **copy** both the `code quality` and `coverage` badges.
-3.  **Add them** to this `README.md` (replace or add to the top).
-
-### ✅ README.md clean up
-
-1.  **Remove all these setup instructions** from the `README.md`.
-2.  **Commit and push** the changes.
+**Enjoy your new Advent of Code edition!**
 
 **Enjoy your new Advent of Code edition!**
 
