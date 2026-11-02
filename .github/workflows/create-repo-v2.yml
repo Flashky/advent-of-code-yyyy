@@ -67,10 +67,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Create Repository from Template
+      - name: Create Solutions Repository
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           echo "Creating repository Flashky/$REPO_NAME from template..."
           gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+
+      - name: Configure Secrets
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        run: |
+          echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
+          gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$REPO_NAME"
+          
+          echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
+          gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "REPO_NAME"
+          
+          echo "Setting PAT_TOKEN secret for Dependabot..."
+          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$REPO_NAME"
