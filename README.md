@@ -4,7 +4,7 @@
 
 Scaffold your Advent of Code repository for Java in three easy steps:
 
-1.  ▶️ Run the [AoC Repository Creations](https://github.com/Flashky/advent-of-code-yyyy/actions/workflows/create-repo.yml) workflow.
+1.  ▶️ Run the [AoC Repository Creation](https://github.com/Flashky/advent-of-code-yyyy/actions/workflows/create-repo.yml) workflow.
 2. 🏆 Add your [Codacy](https://app.codacy.com) `code quality` and `coverage` badges to this `README.md`.
 3. Remove these setup instructions from the ``README.md``.
 
