@@ -15,7 +15,6 @@ jobs:
       year: ${{ steps.set-vars.outputs.year }}
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
-      app_token: ${{ steps.app-token.outputs.token }}
     steps:
       - name: Validate Year Format
         id: set-vars
@@ -61,6 +60,13 @@ jobs:
           done
           exit "$MISSING"
 
+  create-solutions-repository:
+    needs: verify
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -69,16 +75,9 @@ jobs:
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-  create-solutions-repository:
-    needs: verify
-    runs-on: ubuntu-26.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
       - name: Create Repository from Template
         env:
-          GH_TOKEN: ${{ needs.verify.outputs.app_token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           echo "Creating repository Flashky/$REPO_NAME from template..."
