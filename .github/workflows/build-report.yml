@@ -18,7 +18,7 @@ jobs:
 
   verify:
     # Don't run just after creating repo from template
-    if: github.run_number != 1
+    #if: github.run_number != 1
     runs-on: ubuntu-26.04
     outputs:
       skip_report_status: ${{ steps.check-codacy-token.outputs.skip_status }}
