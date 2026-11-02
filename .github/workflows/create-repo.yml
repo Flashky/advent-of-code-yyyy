@@ -134,6 +134,9 @@ jobs:
   bootstrap-solutions-repo:
     needs: [ verify, bootstrap-data-repo ]
     runs-on: ubuntu-26.04
+    env:
+      REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+      OWNER: ${{ github.repository_owner }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -154,7 +157,7 @@ jobs:
         with:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          owner: ${{ env.OWNER }}
 
       - name: Register Repository in Codacy
         env:
@@ -255,4 +258,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- 🎄 **Solutions repository:** [$SOLUTIONS_REPO](https://github.com/$OWNER/$SOLUTIONS_REPO)" >> $GITHUB_STEP_SUMMARY
           echo "- 💾 **Data repository:** [$DATA_REPO](https://github.com/$OWNER/$DATA_REPO)" >> $GITHUB_STEP_SUMMARY
-          
