@@ -64,13 +64,14 @@ jobs:
   bootstrap-data-repo:
     needs: verify
     runs-on: ubuntu-26.04
+    env:
+      REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+      OWNER: ${{ github.repository_owner }}
     steps:
 
       - name: Create Data Repository
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
-          OWNER: ${{ github.repository_owner }}
         run: |
           echo "Creating repository $OWNER/$REPO_NAME from template..."
           gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
@@ -81,7 +82,7 @@ jobs:
         with:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          owner: ${{ env.OWNER }}
 
       - name: Configure Secrets and Variables
         env:
@@ -90,8 +91,6 @@ jobs:
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           YEAR: ${{ needs.verify.outputs.year }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
@@ -106,8 +105,6 @@ jobs:
       - name: Enable Auto-Merge
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           echo "Enabling auto-merge for $REPO_NAME..."
@@ -116,8 +113,6 @@ jobs:
       - name: Allow Actions to Create and Approve PRs
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           echo "Configuring workflow permissions for $REPO_NAME..."
           gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
@@ -127,8 +122,6 @@ jobs:
       - name: Trigger Setup Workflow
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
-          OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           echo "Waiting for GitHub to index workflows in $REPO_NAME..."
@@ -148,8 +141,6 @@ jobs:
       - name: Create Solutions Repository
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           echo "Creating repository $OWNER/$REPO_NAME from template..."
           gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
@@ -168,7 +159,6 @@ jobs:
       - name: Register Repository in Codacy
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: bash .github/scripts/codacy-add-repository.sh "$REPO_NAME"
 
       - name: Generate Codacy Project Token
@@ -176,7 +166,6 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           set -euo pipefail
           PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$REPO_NAME")
@@ -187,13 +176,10 @@ jobs:
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
           YEAR: ${{ needs.verify.outputs.year }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
@@ -211,8 +197,6 @@ jobs:
       - name: Enable Auto-Merge
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           echo "Enabling auto-merge for $REPO_NAME..."
@@ -221,8 +205,6 @@ jobs:
       - name: Allow Actions to Create and Approve PRs
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
-          OWNER:  ${{ github.repository_owner }}
         run: |
           echo "Configuring workflow permissions for $REPO_NAME..."
           gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
@@ -232,8 +214,6 @@ jobs:
       - name: Import Branch Protection Ruleset
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
-          OWNER:  ${{ github.repository_owner }}
           RULESET_FILE: ".github/settings/branch-protection-ruleset.json"
         run: |
           
@@ -249,8 +229,6 @@ jobs:
       - name: Trigger Setup Workflow
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
-          OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           
@@ -278,4 +256,3 @@ jobs:
           echo "- 🎄 **Solutions repository:** [$SOLUTIONS_REPO](https://github.com/$OWNER/$SOLUTIONS_REPO)" >> $GITHUB_STEP_SUMMARY
           echo "- 💾 **Data repository:** [$DATA_REPO](https://github.com/$OWNER/$DATA_REPO)" >> $GITHUB_STEP_SUMMARY
           
-
