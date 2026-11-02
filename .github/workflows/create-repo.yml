@@ -204,9 +204,6 @@ jobs:
           echo "Setting CODACY_PROJECT_TOKEN secret for Actions..."
           gh secret set CODACY_PROJECT_TOKEN --body "$CODACY_PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
           
-          echo "Setting PAT_TOKEN secret for Dependabot..."
-          gh secret set PAT_TOKEN --body "$PAT_TOKEN" --app dependabot --repo "$OWNER/$REPO_NAME"
-          
           echo "Setting AOC_YEAR variable for workflows..."
           gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
 
