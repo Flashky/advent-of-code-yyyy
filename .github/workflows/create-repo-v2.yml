@@ -60,7 +60,7 @@ jobs:
           done
           exit "$MISSING"
 
-  # Scaffolds and bootstraps the solutions repository, initializing any needed tokens.
+  # Bootstraps the solutions repository, initializing any needed tokens and basic configurations.
   bootstrap-solutions-repo:
     needs: verify
     runs-on: ubuntu-26.04
@@ -131,7 +131,7 @@ jobs:
 
       - name: Enable Auto-Merge
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
           OWNER:  ${{ github.repository_owner }}
         run: |
@@ -141,7 +141,7 @@ jobs:
 
       - name: Allow Actions to Create and Approve PRs
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: $${{ steps.app-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
           OWNER:  ${{ github.repository_owner }}
         run: |
@@ -152,7 +152,7 @@ jobs:
 
       - name: Import Branch Protection Ruleset
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
           OWNER:  ${{ github.repository_owner }}
           RULESET_FILE: ".github/settings/branch-protection-ruleset.json"
@@ -161,7 +161,7 @@ jobs:
           if [ ! -f "$RULESET_FILE" ]; then
             echo "::error title=Ruleset Missing::Ruleset file not found at $RULESET_FILE, skipping."
             exit 1    
-          else
+          fi
           
           echo "Importing branch protection ruleset into $REPO_NAME..."
           gh api "repos/$OWNER/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
