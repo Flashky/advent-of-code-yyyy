@@ -65,15 +65,6 @@ jobs:
     needs: verify
     runs-on: ubuntu-26.04
     steps:
-      - name: Create Data Repository
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
-          OWNER: ${{ github.repository_owner }}
-        run: |
-          echo "Creating repository $OWNER/$REPO_NAME from template..."
-          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
-
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -81,6 +72,16 @@ jobs:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+
+      - name: Create Data Repository
+        env:
+          #GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "Creating repository $OWNER/$REPO_NAME from template..."
+          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
 
       - name: Configure Secrets and Variables
         env:
