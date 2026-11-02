@@ -81,4 +81,4 @@ jobs:
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
         run: |
           echo "Creating repository Flashky/$REPO_NAME from template..."
-          gh repo create "Flashky/$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
