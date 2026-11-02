@@ -47,8 +47,8 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
-          AOC_APP_CLIENT_SECRET: ${{ secrets.AOC_APP_CLIENT_SECRET }}
+          AOC_APP_ID: ${{ secrets.AOC_APP_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
         run: |
           set -uo pipefail
           MISSING=0
@@ -59,3 +59,31 @@ jobs:
             fi
           done
           exit "$MISSING"
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.AOC_APP_ID }}
+          private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+
+  create-solutions-repository:
+    needs: verify
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh auth setup-git
+
+      - name: Create Repository from Template
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          REPO_NAME="${{ needs.verify.outputs.repo_name }}"
+          echo "Creating repository Flashky/$REPO_NAME from template..."
+          gh repo create "Flashky/$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
