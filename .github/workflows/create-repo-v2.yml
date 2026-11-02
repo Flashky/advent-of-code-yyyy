@@ -141,7 +141,7 @@ jobs:
 
       - name: Allow Actions to Create and Approve PRs
         env:
-          GH_TOKEN: $${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
           OWNER:  ${{ github.repository_owner }}
         run: |
