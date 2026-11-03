@@ -168,6 +168,12 @@ jobs:
           $GRADE_BADGE\\
           $COVERAGE_BADGE" README.md
 
+      # Remove template configuration instructions
+      - name: Remove instructions
+        run: |
+          set -euo pipefail
+          sed -i '5,20d' README.md
+
       # Add data submodule
       - name: Add Data Submodule
         env:
