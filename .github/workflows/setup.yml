@@ -71,8 +71,6 @@ jobs:
     needs: verify
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v7
-
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -80,7 +78,14 @@ jobs:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: ${{ needs.verify.outputs.repo_name_solutions }}
+          repositories: |
+            ${{ needs.verify.outputs.repo_name_solutions }}
+            ${{ needs.verify.outputs.repo_name_data }}]
+
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
         # Update repository description
       - name: Update Repository Description
@@ -178,7 +183,7 @@ jobs:
       - name: Add Data Submodule
         env:
           OWNER:  ${{ github.repository_owner }}
-          REPO_NAME:  ${{ needs.verify.outputs.repo_name_solutions }}
+          REPO_NAME:  ${{ needs.verify.outputs.repo_name_data }}
         run: |
           echo "Adding private data repository $REPO_NAME as submodule..."
           git submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
