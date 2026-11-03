@@ -122,6 +122,52 @@ jobs:
         run: |
           find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ env.AOC_YEAR }}'/g'
 
+      # Fetch Codacy Badges information
+      - name: Fetch Codacy Badges
+        id: codacy-badges
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO_NAME:  ${{ needs.verify.outputs.repo_name_solutions }}
+        run: |
+          set -euo pipefail
+          
+          RESPONSE=$(curl -s --request GET \
+                        --url "https://app.codacy.com/api/v3/organizations/gh/$OWNER/repositories/$REPO_NAME" \
+                        --header "project-token: $CODACY_PROJECT_TOKEN")
+          
+          GRADE_URL=$(echo "$RESPONSE" | jq -r '.data.badges.grade // empty')
+          COVERAGE_URL=$(echo "$RESPONSE" | jq -r '.data.badges.coverage // empty')
+          
+          if [ -z "$GRADE_URL" ] || [ -z "$COVERAGE_URL" ]; then
+            echo "::warning title=Codacy Badges Missing::Could not fetch badge URLs from Codacy API after multiple retries. Skipping badge injection."
+            echo "skip_badges=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Badges successfully fetched from Codacy!"
+          echo "skip_badges=false" >> $GITHUB_OUTPUT
+          echo "grade_url=$GRADE_URL" >> $GITHUB_OUTPUT
+          echo "coverage_url=$COVERAGE_URL" >> $GITHUB_OUTPUT
+
+      # Add Codacy badges
+      - name: Add Codacy Badges
+        if: steps.codacy-badges.outputs.skip_badges == 'false'
+        env:
+          GRADE_URL: ${{ steps.codacy-badges.outputs.grade_url }}
+          COVERAGE_URL: ${{ steps.codacy-badges.outputs.coverage_url }}
+          OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        run: |
+          set -euo pipefail
+          
+          GRADE_BADGE="[![Codacy Badge]($GRADE_URL)](https://app.codacy.com/gh/$OWNER/$REPO_NAME/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)"
+          COVERAGE_BADGE="[![Codacy Badge]($COVERAGE_URL)](https://app.codacy.com/gh/$OWNER/$REPO_NAME/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)"
+          
+          sed -i "3i\\
+          $GRADE_BADGE\\
+          $COVERAGE_BADGE" README.md
+
       # Add data submodule
       - name: Add Data Submodule
         env:
