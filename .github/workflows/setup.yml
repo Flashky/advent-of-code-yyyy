@@ -183,9 +183,13 @@ jobs:
         env:
           OWNER:  ${{ github.repository_owner }}
           REPO_NAME:  ${{ needs.verify.outputs.repo_name_data }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          set -euo pipefail
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           echo "Adding private data repository $REPO_NAME as submodule..."
-          git submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
+          git -c "http.https://github.com/.extraheader=$AUTH_HEADER" \
+                  submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
 
       # Open Pull Request
       - name: Open Pull Request
