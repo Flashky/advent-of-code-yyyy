@@ -86,6 +86,14 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
+      - name: Ensure Setup Has Not Already Run
+        run: |
+          set -euo pipefail
+          if [[ -f .gitmodules ]] ; then
+            echo "::error title=Already Set Up::This repository is already initialised. Setup is single-use and must not be re-run."
+            exit 1
+          fi
+
         # Update repository description
       - name: Update Repository Description
         env:
@@ -188,8 +196,12 @@ jobs:
           set -euo pipefail
           AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           echo "Adding private data repository $REPO_NAME as submodule..."
-          git -c "http.https://github.com/.extraheader=$AUTH_HEADER" \
-                  submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
+          if [[ -d src/test/resources/inputs/.git ]]; then
+            echo "Submodule already present at src/test/resources/inputs. Skipping."
+          else
+            git -c "http.https://github.com/.extraheader=$AUTH_HEADER" \
+                    submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
+          fi
 
       # Open Pull Request
       - name: Open Pull Request
@@ -213,6 +225,7 @@ jobs:
           echo "Pull Request URL - ${{ steps.pull-request.outputs.pull-request-url }}"
 
       - name: Enable Pull Request Auto-Merge
+        if: ${{ steps.pull-request.outputs.pull-request-url != '' }}
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_URL:  ${{ steps.pull-request.outputs.pull-request-url }}
