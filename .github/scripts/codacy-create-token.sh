@@ -27,16 +27,20 @@ RESPONSE_FILE=$(mktemp)
 trap 'rm -f "$RESPONSE_FILE"' EXIT
 
 # Generate a token
-HTTP_STATUS=$(curl -sX POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
+HTTP_STATUS=$(curl -sSX POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
      -H "api-token: $CODACY_API_TOKEN" \
      -w "%{http_code}" \
-     -o "$RESPONSE_FILE")
+     -o "$RESPONSE_FILE") || {
+   rc=$?
+   echo "::error title=Codacy API::Request to Codacy failed (curl exit $rc)"
+   exit 1
+}
 
 # Check results
 if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
 
   # Extract the token
-  TOKEN=$(grep -o '"token"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | head -n 1 | sed 's/.*:"\(.*\)"/\1/')
+  TOKEN=$(grep -o -m1 '"token"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | sed 's/.*:"\(.*\)"/\1/' || true)
 
   # Print the token
   if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
@@ -47,8 +51,8 @@ fi
 
 # Error cases - Log the error
 if [ -s "$RESPONSE_FILE" ]; then
-  ERR_TITLE=$(grep -o '"error"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | head -n 1 | sed 's/.*:"\(.*\)"/\1/')
-  ERR_MSG=$(grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | head -n 1 | sed 's/.*:"\(.*\)"/\1/')
+  ERR_TITLE=$(grep -o -m1 '"error"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | sed 's/.*:"\(.*\)"/\1/' || true)
+  ERR_MSG=$(grep -o -m1 '"message"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | sed 's/.*:"\(.*\)"/\1/' || true)
 
   ERR_TITLE="${ERR_TITLE:-Error}"
   ERR_MSG="${ERR_MSG:-$(cat "$RESPONSE_FILE")}"
