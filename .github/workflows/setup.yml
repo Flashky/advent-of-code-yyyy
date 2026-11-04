@@ -2,6 +2,10 @@ name: Setup
 on:
   workflow_dispatch:
 
+# This workflow can only have one active execution at any time
+concurrency:
+  group: setup-workflow
+
 env:
   AOC_YEAR: ${{ vars.AOC_YEAR }}
 
