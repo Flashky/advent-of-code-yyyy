@@ -16,6 +16,13 @@ jobs:
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
     steps:
+      - name: Restrict to Template Repository
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REPOSITORY" != "Flashky/advent-of-code-yyyy" ]]; then
+            echo "::error title=Template Restriction::This workflow can only run from the template repository Flashky/advent-of-code-yyyy (current: $GITHUB_REPOSITORY)."
+            exit 1
+          fi
       - name: Validate Year Format
         id: set-vars
         env:
