@@ -89,8 +89,10 @@ jobs:
       - name: Ensure Setup Has Not Already Run
         run: |
           set -euo pipefail
-          if [[ -f .gitmodules ]] ; then
-            echo "::error title=Already Set Up::This repository is already initialised. Setup is single-use and must not be re-run."
+          SUCCESS_COUNT=$(gh run list --workflow=setup.yml --status=success --limit=1 --json databaseId -q 'length')
+          
+          if [ "$SUCCESS_COUNT" -gt 0 ]; then
+            echo "::error title=Setup execution restriction::The Setup workflow can only be executed once."
             exit 1
           fi
 
