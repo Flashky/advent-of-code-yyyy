@@ -115,7 +115,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "Configuring workflow permissions for $REPO_NAME..."
-          gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
             -F default_workflow_permissions="write" \
             -F can_approve_pull_request_reviews=true
 
@@ -210,7 +210,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "Configuring workflow permissions for $REPO_NAME..."
-          gh api --method PUT "repos/Flashky/$REPO_NAME/actions/permissions/workflow" \
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
             -F default_workflow_permissions="write" \
             -F can_approve_pull_request_reviews=true
 
