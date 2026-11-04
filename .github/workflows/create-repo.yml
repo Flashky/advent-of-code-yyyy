@@ -148,9 +148,6 @@ jobs:
           echo "Creating repository $OWNER/$REPO_NAME from template..."
           gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
 
-      - name: Make scripts executable
-        run: chmod +x .github/scripts/codacy-add-repository.sh .github/scripts/codacy-create-token.sh
-
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -162,7 +159,7 @@ jobs:
       - name: Register Repository in Codacy
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-        run: bash .github/scripts/codacy-add-repository.sh "$REPO_NAME"
+        run: bash .github/scripts/codacy-add-repository.sh "$OWNER" "$REPO_NAME"
 
       - name: Generate Codacy Project Token
         id: codacy-token
@@ -171,7 +168,7 @@ jobs:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           set -euo pipefail
-          PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$REPO_NAME")
+          PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$OWNER" "$REPO_NAME")
           echo "::add-mask::$PROJECT_TOKEN"
           echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
 
