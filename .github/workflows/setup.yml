@@ -2,6 +2,10 @@ name: Setup
 on:
   workflow_dispatch:
 
+# This workflow can only have one active execution at any time
+concurrency:
+  group: setup-workflow
+
 env:
   AOC_YEAR: ${{ vars.AOC_YEAR }}
 
@@ -85,6 +89,18 @@ jobs:
       - uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
+
+      - name: Ensure Setup Has Not Already Run
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          SUCCESS_COUNT=$(gh run list --workflow=setup.yml --status=success --limit=1 --json databaseId -q 'length')
+          
+          if [ "$SUCCESS_COUNT" -gt 0 ]; then
+            echo "::error title=Setup execution restriction::The Setup workflow can only be executed once."
+            exit 1
+          fi
 
         # Update repository description
       - name: Update Repository Description
@@ -188,8 +204,14 @@ jobs:
           set -euo pipefail
           AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           echo "Adding private data repository $REPO_NAME as submodule..."
-          git -c "http.https://github.com/.extraheader=$AUTH_HEADER" \
-                  submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
+          
+          if git submodule status src/test/resources/inputs >/dev/null 2>&1 || [[ -f src/test/resources/inputs/.git ]]; then
+            echo "Submodule already present or registered at src/test/resources/inputs. Updating..."
+            git -c "http.https://github.com/.extraheader=$AUTH_HEADER" submodule update --init --recursive src/test/resources/inputs
+          else
+            git -c "http.https://github.com/.extraheader=$AUTH_HEADER" \
+              submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
+          fi
 
       # Open Pull Request
       - name: Open Pull Request
@@ -213,6 +235,7 @@ jobs:
           echo "Pull Request URL - ${{ steps.pull-request.outputs.pull-request-url }}"
 
       - name: Enable Pull Request Auto-Merge
+        if: ${{ steps.pull-request.outputs.pull-request-url != '' }}
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_URL:  ${{ steps.pull-request.outputs.pull-request-url }}
