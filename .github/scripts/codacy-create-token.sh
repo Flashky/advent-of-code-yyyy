@@ -1,19 +1,30 @@
 #!/bin/bash
 # =================================================================================
-# Usage:       ./codacy-create-token.sh <repository-name>
+# Usage:       ./codacy-create-token.sh <owner> <repository-name>
 # Description: Generates a project-level Codacy token for the specified repository.
-# Example:     ./codacy-create-token.sh advent-of-code-2026
+# Example:     ./codacy-create-token.sh Flashky advent-of-code-2026
 # =================================================================================
 
-set -e
+set -euo pipefail
 
 GIT_PROVIDER="gh"
-ORGANIZATION="Flashky"
-REPOSITORY=$1
+ORGANIZATION="${1:?Usage: $0 <owner> <repository-name>}"
+REPOSITORY="${2:?Usage: $0 <owner> <repository-name>}"
+
+# Validations
+
+: "${CODACY_API_TOKEN:?CODACY_API_TOKEN is not set}"
+
+for value in "$ORGANIZATION" "$REPOSITORY"; do
+  [[ "$value" =~ ^[A-Za-z0-9_.-]+$ ]] || {
+    echo "::error title=Invalid Argument::'$value' is not a valid GitHub owner/repository name."
+    exit 1
+  }
+done
 
 # Temporary file to store the API response
 RESPONSE_FILE=$(mktemp)
-trap "rm -f $RESPONSE_FILE" EXIT
+trap 'rm -f "$RESPONSE_FILE"' EXIT
 
 # Generate a token
 HTTP_STATUS=$(curl -sX POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \

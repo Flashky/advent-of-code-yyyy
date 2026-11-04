@@ -1,19 +1,30 @@
 #!/bin/bash
 # =================================================================================
-# Usage:       ./codacy-add-repository.sh <repository-name>
+# Usage:       ./codacy-add-repository.sh <owner> <repository-name>
 # Description: Adds the specified repository to Codacy
-# Example:     ./codacy-create-token.sh advent-of-code-2026
+# Example:     ./codacy-add-repository.sh Flashky advent-of-code-2026
 # =================================================================================
 
-set -e
+set -euo pipefail
 
 GIT_PROVIDER="gh"
-ORGANIZATION="Flashky"
-REPOSITORY=$1
+ORGANIZATION="${1:?Usage: $0 <owner> <repository-name>}"
+REPOSITORY="${2:?Usage: $0 <owner> <repository-name>}"
+
+# Validations
+
+: "${CODACY_API_TOKEN:?CODACY_API_TOKEN is not set}"
+
+for value in "$ORGANIZATION" "$REPOSITORY"; do
+  [[ "$value" =~ ^[A-Za-z0-9_.-]+$ ]] || {
+    echo "::error title=Invalid Argument::'$value' is not a valid GitHub owner/repository name."
+    exit 1
+  }
+done
 
 # Temporary file to store the API response
 RESPONSE_FILE=$(mktemp)
-trap "rm -f $RESPONSE_FILE" EXIT
+trap 'rm -f "$RESPONSE_FILE"' EXIT
 
 echo "Adding repository to Codacy..."
 
