@@ -87,6 +87,8 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Ensure Setup Has Not Already Run
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           SUCCESS_COUNT=$(gh run list --workflow=setup.yml --status=success --limit=1 --json databaseId -q 'length')
