@@ -28,4 +28,4 @@ This README exists only in the template. Generated repositories get their own.
 
 ## About
 
-- [Advent of Code](https://adventofcode.com/2025/about)
+- [Advent of Code](https://adventofcode.com/about)
