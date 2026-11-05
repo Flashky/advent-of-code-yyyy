@@ -7,7 +7,7 @@ Template that scaffolds a complete Advent of Code setup generating:
 
 ## Requirements
 
-Configure the following secrets at this repository:
+Configure the following secrets in this repository:
 
 | Secret | Purpose |
 |---|---|
