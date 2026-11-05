@@ -135,12 +135,8 @@ jobs:
       # Update year placeholders
       - name: Update year placeholders
         run: |
-          set -euo pipefail
-          find . -type f \( -name 'README.md' -o -name 'pom.xml' \) \
-            -not -path './target/*' \
-            -not -path './.github/*' \
-            -print0 \
-            | xargs -0 -r sed -i "s/yyyy/${AOC_YEAR}/g"
+          find . \( -name 'README.md' -o -name 'pom.xml' \) -print0 \
+          | xargs -0 sed -i "s/yyyy/${AOC_YEAR}/g"
 
       # Fetch Codacy Badges information
       - name: Fetch Codacy Badges
