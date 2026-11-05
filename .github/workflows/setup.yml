@@ -132,15 +132,15 @@ jobs:
           echo "Removing day 13 to 25 links from README.md."
           sed -i '/^- \[Day \(1[3-9]\|2[0-5]\)/d' README.md
 
-      # Update README.md
-      - name: Update README.md
+      # Update year placeholders
+      - name: Update year placeholders
         run: |
-          find . -name 'README.md' | xargs sed -i 's/{year}/'${{ env.AOC_YEAR }}'/g'
-
-      # Update pom.xml
-      - name: Update pom.xml
-        run: |
-          find . -name 'pom.xml' | xargs sed -i 's/yyyy/'${{ env.AOC_YEAR }}'/g'
+          set -euo pipefail
+          find . -type f \( -name 'README.md' -o -name 'pom.xml' \) \
+            -not -path './target/*' \
+            -not -path './.github/*' \
+            -print0 \
+            | xargs -0 -r sed -i "s/yyyy/${AOC_YEAR}/g"
 
       # Fetch Codacy Badges information
       - name: Fetch Codacy Badges
