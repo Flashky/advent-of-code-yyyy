@@ -206,6 +206,10 @@ jobs:
               submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
           fi
 
+      # Remove not needed workflows
+      - name: Remove one-shot workflows
+        run: rm .github/workflows/setup.yml .github/workflows/create-repo.yml
+
       # Open Pull Request
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
