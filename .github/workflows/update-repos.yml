@@ -63,6 +63,9 @@ jobs:
 
   update:
     needs: discover
+    concurrency:
+      group: update-${{ matrix.repo }}
+      cancel-in-progress: false
     runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
