@@ -53,9 +53,9 @@ jobs:
       - name: Check Required Secrets
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           set -uo pipefail
           MISSING=0

@@ -1,0 +1,197 @@
+name: Update repositories
+on:
+  workflow_dispatch:
+
+jobs:
+
+  verify:
+    runs-on: ubuntu-26.04
+    steps:
+    - name: Restrict to Default Branch
+      env:
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        set -euo pipefail
+        if [[ "$GITHUB_REF_NAME" != "$DEFAULT_BRANCH" ]]; then
+          echo "::error title=Untrusted Ref::This workflow can only be dispatched from master (current: $GITHUB_REF)."
+          exit 1
+        fi
+
+    - name: Restrict to Template Repository
+      run: |
+        set -euo pipefail
+        if [[ "$GITHUB_REPOSITORY" != "Flashky/advent-of-code-yyyy" ]]; then
+          echo "::error title=Template Restriction::This workflow can only run from the template repository Flashky/advent-of-code-yyyy (current: $GITHUB_REPOSITORY)."
+          exit 1
+        fi
+
+    - name: Check Required Secrets
+      env:
+        AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+        AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+      run: |
+        set -uo pipefail
+        MISSING=0
+        for name in AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY CODACY_API_TOKEN; do
+          if [ -z "${!name:-}" ]; then
+            echo "::error title=Missing Secret::$name secret is not set."
+            MISSING=1
+          fi
+        done
+        exit "$MISSING"
+
+  discover:
+    runs-on: ubuntu-26.04
+    needs: verify
+    outputs:
+      repos: ${{ steps.list.outputs.repos }}
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        with:
+          client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-metadata: read
+
+      - name: List repositories
+        id: list
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          repos=$(gh repo list "$OWNER" \
+              --topic advent-of-code-flashky \
+              --limit 100 \
+              --json name \
+              --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021")] | sort')
+          
+          echo "repos=$repos" >> "$GITHUB_OUTPUT"
+          echo "Repos: $repos"
+
+  update:
+    needs: discover
+    concurrency:
+      group: update-${{ matrix.repo }}
+      cancel-in-progress: false
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: ${{ fromJSON(needs.discover.outputs.repos) }}
+    env:
+      OWNER: ${{ github.repository_owner }}
+      REPO_NAME: ${{ matrix.repo }}
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        with:
+          client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.repo }}          # Limit token usage to the selected repo.
+          permission-administration: write          # ← PATCH repo, workflow perms, rulesets
+          permission-contents: write                # ← checkout + commit
+          permission-pull-requests: write           # ← create-pull-request
+          permission-secrets: write                 # ← gh secret set + list
+          permission-workflows: write               # ← .github/workflows
+
+      - name: Checkout template
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: template
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Configure secrets
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh secret set AOC_APP_CLIENT_ID  --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
+
+          if gh api "repos/$OWNER/$REPO_NAME/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
+            echo "CODACY_PROJECT_TOKEN already set, leaving it untouched."
+          else
+            token=$(bash template/.github/scripts/codacy-create-token.sh "$OWNER" "$REPO_NAME")
+            echo "::add-mask::$token"
+            gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$token"
+          fi
+
+      - name: Enable Auto-Merge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          echo "Enabling auto-merge for $REPO_NAME..."
+          gh api "repos/$OWNER/$REPO_NAME" -X PATCH  -F allow_auto_merge=true
+
+      - name: Allow Actions to Create and Approve PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "Configuring workflow permissions for $REPO_NAME..."
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
+
+      - name: Import Branch Protection Ruleset
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RULESET_FILE: "template/.github/settings/branch-protection-ruleset.json"
+        run: |
+          set -euo pipefail
+          RULESET_ID=$(gh api --paginate "repos/$OWNER/$REPO_NAME/rulesets" \
+            --jq '.[] | select(.name == "Master branch protection") | .id')
+
+          if [ -n "$RULESET_ID" ]; then
+            jq 'del(.source_type)' "$RULESET_FILE" > "$RUNNER_TEMP/ruleset.json"
+            gh api --method PUT "repos/$OWNER/$REPO_NAME/rulesets/$RULESET_ID" \
+              --input "$RUNNER_TEMP/ruleset.json"
+          else
+            gh api --method POST "repos/$OWNER/$REPO_NAME/rulesets" --input "$RULESET_FILE"
+          fi
+
+      - name: Checkout target repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: ${{ github.repository_owner }}/${{ matrix.repo }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: target
+
+      - name: Sync workflows
+        run: |
+          set -euo pipefail
+          for file in build-report.yml enable-automerge.yml; do
+            cp "template/.github/workflows/$file" "target/.github/workflows/$file"
+          done
+          for file in update-year.yml bypass-codacy-variation.yml codacy-baseline-fixer.yml; do
+            rm -f "target/.github/workflows/$file"
+          done
+          git -C target status --short
+
+      - name: Create pull request
+        id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          path: target
+          token: ${{ steps.app-token.outputs.token }}
+          sign-commits: true
+          branch: chore/update-workflows
+          delete-branch: true
+          commit-message: "chore: sync workflows from template repository"
+          title: "chore: sync workflows from template repository"
+          body: |
+            Syncs `build-report.yml` and `enable-automerge.yml` from the template
+            and removes obsolete workflows.
+
+      - name: Report
+        run: |
+          echo "PR: ${{ steps.pr.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
