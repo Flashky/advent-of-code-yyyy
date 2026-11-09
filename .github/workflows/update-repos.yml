@@ -7,6 +7,16 @@ jobs:
   verify:
     runs-on: ubuntu-26.04
     steps:
+    - name: Restrict to Default Branch
+      env:
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        set -euo pipefail
+        if [[ "$GITHUB_REF" != "$DEFAULT_BRANCH" ]]; then
+          echo "::error title=Untrusted Ref::This workflow can only be dispatched from master (current: $GITHUB_REF)."
+          exit 1
+        fi
+
     - name: Restrict to Template Repository
       run: |
         set -euo pipefail
@@ -44,7 +54,8 @@ jobs:
           client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-
+          permission-metadata: read
+          
       - name: List repositories
         id: list
         env:
