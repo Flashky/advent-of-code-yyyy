@@ -31,7 +31,7 @@ jobs:
               --topic advent-of-code-flashky \
               --limit 100 \
               --json name \
-              --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021")] | sort')
+              --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021" and . == "advent-of-code-2025")] | sort')
           
           echo "repos=$repos" >> "$GITHUB_OUTPUT"
           echo "Repos: $repos"
@@ -67,5 +67,84 @@ jobs:
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          echo "Repo: $REPO"
+          gh secret set AOC_APP_CLIENT_ID  --repo "$OWNER/$REPO" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO" --body "$AOC_APP_PRIVATE_KEY"
 
+          if gh api "repos/$OWNER/$REPO/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
+            echo "CODACY_PROJECT_TOKEN already set, leaving it untouched."
+          else
+            token=$(bash template/.github/scripts/codacy-create-token.sh "$OWNER" "$REPO")
+            echo "::add-mask::$token"
+            gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO" --body "$token"
+          fi
+
+      - name: Enable Auto-Merge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          echo "Enabling auto-merge for $REPO_NAME..."
+          gh api "repos/$OWNER/$REPO_NAME" -X PATCH  -F allow_auto_merge=true
+
+      - name: Allow Actions to Create and Approve PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "Configuring workflow permissions for $REPO_NAME..."
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
+
+      - name: Import Branch Protection Ruleset
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RULESET_FILE: "template/.github/settings/branch-protection-ruleset.json"
+        run: |
+          set -euo pipefail
+          RULESET_ID=$(gh api --paginate "repos/$OWNER/$REPO/rulesets" \
+            --jq '.[] | select(.name == "Master branch protection") | .id')
+
+          if [ -n "$RULESET_ID" ]; then
+            jq 'del(.source_type)' "$RULESET_FILE" > "$RUNNER_TEMP/ruleset.json"
+            gh api --method PUT "repos/$OWNER/$REPO/rulesets/$RULESET_ID" \
+              --input "$RUNNER_TEMP/ruleset.json"
+          else
+            gh api --method POST "repos/$OWNER/$REPO/rulesets" --input "$RULESET_FILE"
+          fi
+
+      - name: Checkout target repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: ${{ github.repository_owner }}/${{ matrix.repo }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: target
+
+      - name: Sync workflows
+        run: |
+          set -euo pipefail
+          for file in build-report.yml enable-automerge.yml; do
+            cp "template/.github/workflows/$file" "target/.github/workflows/$file"
+          done
+          for file in update-year.yml bypass-codacy-variation.yml codacy-baseline-fixer.yml; do
+            rm -f "target/.github/workflows/$file"
+          done
+          git -C target status --short
+
+      - name: Create pull request
+        id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          path: target
+          token: ${{ steps.app-token.outputs.token }}
+          sign-commits: true
+          branch: chore/update-workflows
+          delete-branch: true
+          commit-message: "chore: sync workflows from template repository"
+          title: "chore: sync workflows from template repository"
+          body: |
+            Syncs `build-report.yml` and `enable-automerge.yml` from the template
+            and removes obsolete workflows.
+
+      - name: Report
+        run: |
+          echo "PR: ${{ steps.pr.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
