@@ -207,8 +207,8 @@ jobs:
           fi
 
       # Remove not needed workflows
-      - name: Remove one-shot workflows
-        run: rm .github/workflows/setup.yml .github/workflows/create-repo.yml
+      - name: Remove not needed workflows
+        run: rm .github/workflows/setup.yml .github/workflows/create-repo.yml .github/workflows/update-repos.yml
 
       # Open Pull Request
       - name: Open Pull Request
