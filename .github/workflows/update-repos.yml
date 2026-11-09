@@ -45,7 +45,7 @@ jobs:
         repo: ${{ fromJSON(needs.discover.outputs.repos) }}
     env:
       OWNER: ${{ github.repository_owner }}
-      REPO: ${{ matrix.repo }}
+      REPO_NAME: ${{ matrix.repo }}
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -67,15 +67,15 @@ jobs:
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          gh secret set AOC_APP_CLIENT_ID  --repo "$OWNER/$REPO" --body "$AOC_APP_CLIENT_ID"
-          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO" --body "$AOC_APP_PRIVATE_KEY"
+          gh secret set AOC_APP_CLIENT_ID  --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
 
-          if gh api "repos/$OWNER/$REPO/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
+          if gh api "repos/$OWNER/$REPO_NAME/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
             echo "CODACY_PROJECT_TOKEN already set, leaving it untouched."
           else
-            token=$(bash template/.github/scripts/codacy-create-token.sh "$OWNER" "$REPO")
+            token=$(bash template/.github/scripts/codacy-create-token.sh "$OWNER" "$REPO_NAME")
             echo "::add-mask::$token"
-            gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO" --body "$token"
+            gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$token"
           fi
 
       - name: Enable Auto-Merge
@@ -101,15 +101,15 @@ jobs:
           RULESET_FILE: "template/.github/settings/branch-protection-ruleset.json"
         run: |
           set -euo pipefail
-          RULESET_ID=$(gh api --paginate "repos/$OWNER/$REPO/rulesets" \
+          RULESET_ID=$(gh api --paginate "repos/$OWNER/$REPO_NAME/rulesets" \
             --jq '.[] | select(.name == "Master branch protection") | .id')
 
           if [ -n "$RULESET_ID" ]; then
             jq 'del(.source_type)' "$RULESET_FILE" > "$RUNNER_TEMP/ruleset.json"
-            gh api --method PUT "repos/$OWNER/$REPO/rulesets/$RULESET_ID" \
+            gh api --method PUT "repos/$OWNER/$REPO_NAME/rulesets/$RULESET_ID" \
               --input "$RUNNER_TEMP/ruleset.json"
           else
-            gh api --method POST "repos/$OWNER/$REPO/rulesets" --input "$RULESET_FILE"
+            gh api --method POST "repos/$OWNER/$REPO_NAME/rulesets" --input "$RULESET_FILE"
           fi
 
       - name: Checkout target repository
