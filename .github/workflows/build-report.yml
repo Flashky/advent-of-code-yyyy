@@ -67,6 +67,7 @@ jobs:
           repositories: |
             ${{ github.event.repository.name }}
             ${{ github.event.repository.name }}-data
+          permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
