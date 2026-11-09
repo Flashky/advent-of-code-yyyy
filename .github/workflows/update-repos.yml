@@ -1,6 +1,8 @@
 name: Update repositories
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/305-add-sync-config-workflow-read-only-mode]
 
 jobs:
 
@@ -25,8 +27,8 @@ jobs:
           TARGET: ${{ inputs.target }}
         run: |
           set -euo pipefail
-          repos=$(gh repo list "$OWNER" 
-              --topic advent-of-code-flashky 
+          repos=$(gh repo list "$OWNER" \
+              --topic advent-of-code-flashky \
               --limit 100 \
               --json name \
               --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021")] | sort')
