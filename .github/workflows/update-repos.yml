@@ -1,0 +1,37 @@
+name: Update repositories
+on:
+  workflow_dispatch:
+
+jobs:
+
+  discover:
+    runs-on: ubuntu-26.04
+    outputs:
+      repos: ${{ steps.list.outputs.repos }}
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        with:
+          client-id: ${{ secrets.AOC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: List repositories
+        id: list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          repos=$(gh repo list "$OWNER" 
+              --topic advent-of-code-flashky 
+              --limit 100 \
+              --json name \
+              --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021")] | sort')
+          
+          echo "repos=$repos" >> "$GITHUB_OUTPUT"
+          echo "Repos: $repos"
+
+
