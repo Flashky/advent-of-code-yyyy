@@ -1,8 +1,6 @@
 name: Update repositories
 on:
   workflow_dispatch:
-  push:
-    branches: [feature/305-add-sync-config-workflow-read-only-mode]
 
 jobs:
 
@@ -32,6 +30,7 @@ jobs:
           fi
         done
         exit "$MISSING"
+
   discover:
     runs-on: ubuntu-26.04
     needs: verify
@@ -49,16 +48,15 @@ jobs:
       - name: List repositories
         id: list
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           OWNER: ${{ github.repository_owner }}
-          TARGET: ${{ inputs.target }}
         run: |
           set -euo pipefail
           repos=$(gh repo list "$OWNER" \
               --topic advent-of-code-flashky \
               --limit 100 \
               --json name \
-              --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021" and . == "advent-of-code-2025")] | sort')
+              --jq '[.[].name | select(test("^advent-of-code-[0-9]{4}$") and . != "advent-of-code-2021")] | sort')
           
           echo "repos=$repos" >> "$GITHUB_OUTPUT"
           echo "Repos: $repos"
