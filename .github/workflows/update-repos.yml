@@ -35,7 +35,7 @@ jobs:
       run: |
         set -uo pipefail
         MISSING=0
-        for name in AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY CODACY_API_TOKEN; do
+        for name in AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY CODACY_API_TOKEN; do
           if [ -z "${!name:-}" ]; then
             echo "::error title=Missing Secret::$name secret is not set."
             MISSING=1
