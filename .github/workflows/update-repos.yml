@@ -98,6 +98,7 @@ jobs:
           permission-contents: write                # ← checkout + commit
           permission-pull-requests: write           # ← create-pull-request
           permission-secrets: write                 # ← gh secret set + list
+          permission-dependabot-secrets: write      # ← gh secret set for dependabot app
           permission-workflows: write               # ← .github/workflows
 
       - name: Checkout template
@@ -117,6 +118,10 @@ jobs:
           gh secret set AOC_APP_CLIENT_ID  --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
           gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
 
+          echo "Setting secrets for Dependabot..."
+          gh secret set AOC_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
+        
           if gh api "repos/$OWNER/$REPO_NAME/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
             echo "CODACY_PROJECT_TOKEN already set, leaving it untouched."
           else
