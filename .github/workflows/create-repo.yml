@@ -200,6 +200,15 @@ jobs:
           
           echo "Setting AOC_YEAR variable for workflows..."
           gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
+          
+          echo "Setting AOC_APP_CLIENT_ID secret for Dependabot..."
+          gh secret set AOC_APP_CLIENT_ID --app Dependabot --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
+          
+          echo "Setting AOC_APP_PRIVATE_KEY secret for Dependabot..."
+          gh secret set AOC_APP_PRIVATE_KEY --app dependabot --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
+          
+          echo "Setting CODACY_PROJECT_TOKEN secret for Dependabot..."
+          gh secret set CODACY_PROJECT_TOKEN --app dependabot  --body "$CODACY_PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
 
       - name: Enable Auto-Merge
         env:
