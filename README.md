@@ -13,8 +13,10 @@ Configure the following secrets in this repository:
 |---|---|
 | `PAT_TOKEN` | Creates the repositories |
 | `CODACY_API_TOKEN` | Registers the projects in Codacy |
-| `AOC_APP_CLIENT_ID` | GitHub App used by the generated repository |
-| `AOC_APP_PRIVATE_KEY` | GitHub App private key |
+| `AOC_APP_CLIENT_ID` | GitHub App used for provisioning the generated repository |
+| `AOC_APP_PRIVATE_KEY` | GitHub App provisioning private key |
+| `AOC_CI_APP_CLIENT_ID` | GitHub App used for the generated repository to use for CI build workflows (only `read` permissions) |
+| `AOC_CI_APP_PRIVATE_KEY` | GitHub App CI build private key |
 
 ## 🚀 Usage
 
