@@ -29,6 +29,8 @@ jobs:
       env:
         AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
         AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
+        AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
         CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
       run: |
         set -uo pipefail
