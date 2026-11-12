@@ -100,10 +100,8 @@ jobs:
           YEAR: ${{ needs.verify.outputs.year }}
         run: |
           set -euo pipefail
-          echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
+          echo "Setting secrets for Actions..."
           gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
-          
-          echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
           gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting AOC_YEAR variable for workflows..."
@@ -185,17 +183,18 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+          AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
+          AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
           YEAR: ${{ needs.verify.outputs.year }}
         run: |
           set -euo pipefail
-          echo "Setting AOC_APP_CLIENT_ID secret for Actions..."
+          
+          echo "Setting secrets for Actions..."
           gh secret set AOC_APP_CLIENT_ID --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
-          
-          echo "Setting AOC_APP_PRIVATE_KEY secret for Actions..."
           gh secret set AOC_APP_PRIVATE_KEY --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
-          
-          echo "Setting CODACY_PROJECT_TOKEN secret for Actions..."
+          gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "AOC_CI_APP_CLIENT_ID"
+          gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "AOC_CI_APP_PRIVATE_KEY"
           gh secret set CODACY_PROJECT_TOKEN --body "$CODACY_PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting AOC_YEAR variable for workflows..."
@@ -204,6 +203,8 @@ jobs:
           echo "Setting secrets for Dependabot..."
           gh secret set AOC_APP_CLIENT_ID --app dependabot --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
           gh secret set AOC_APP_PRIVATE_KEY --app dependabot --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
+          gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "AOC_CI_APP_CLIENT_ID"
+          gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "AOC_CI_APP_PRIVATE_KEY"
           gh secret set CODACY_PROJECT_TOKEN --app dependabot --body "$CODACY_PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
 
       - name: Enable Auto-Merge
