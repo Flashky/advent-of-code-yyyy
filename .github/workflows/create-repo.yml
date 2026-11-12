@@ -203,8 +203,6 @@ jobs:
           gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting secrets for Dependabot..."
-          gh secret set AOC_APP_CLIENT_ID --app dependabot --body "$AOC_APP_CLIENT_ID" --repo "$OWNER/$REPO_NAME"
-          gh secret set AOC_APP_PRIVATE_KEY --app dependabot --body "$AOC_APP_PRIVATE_KEY" --repo "$OWNER/$REPO_NAME"
           gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "AOC_CI_APP_CLIENT_ID"
           gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "AOC_CI_APP_PRIVATE_KEY"
           gh secret set CODACY_PROJECT_TOKEN --app dependabot --body "$CODACY_PROJECT_TOKEN" --repo "$OWNER/$REPO_NAME"
