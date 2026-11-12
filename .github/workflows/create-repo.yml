@@ -197,7 +197,7 @@ jobs:
           gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
           gh secret set AOC_CI_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID" 
           gh secret set AOC_CI_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"  
-          gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME"--body "$CODACY_PROJECT_TOKEN"
+          gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
           
           echo "Setting AOC_YEAR variable for workflows..."
           gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
