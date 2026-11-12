@@ -98,6 +98,7 @@ jobs:
           permission-contents: write                # ← checkout + commit
           permission-pull-requests: write           # ← create-pull-request
           permission-secrets: write                 # ← gh secret set + list
+          permission-dependabot-secrets: write      # ← gh secret set for dependabot app
           permission-workflows: write               # ← .github/workflows
 
       - name: Checkout template
