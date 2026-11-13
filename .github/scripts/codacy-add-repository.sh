@@ -44,6 +44,12 @@ HTTP_STATUS=$(curl -sSX POST "https://app.codacy.com/api/v3/repositories" \
 }
 
 # Check results
+if [[ "$HTTP_STATUS" == "409" ]]; then
+  # Provisioning must be safe to re-run: an already added repository is not an error.
+  echo "::warning title=Repository already added::$ORGANIZATION/$REPOSITORY is already registered in Codacy; nothing to do."
+  exit 0
+fi
+
 if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
   echo "Repository successfully added to Codacy."
   exit 0

@@ -11,6 +11,9 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     outputs:
       year: ${{ steps.set-vars.outputs.year }}
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
@@ -73,6 +76,9 @@ jobs:
   bootstrap-data-repo:
     needs: verify
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     env:
       REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
       OWNER: ${{ github.repository_owner }}
@@ -82,8 +88,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Creating repository $OWNER/$REPO_NAME from template..."
-          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
+          set -euo pipefail
+
+          if ERROR=$(gh api "repos/$OWNER/$REPO_NAME" --silent 2>&1); then
+            # Paginated: a single page can miss the old Setup run in a busy repository.
+            SETUP_SUCCESSES=$(gh api --paginate --slurp "repos/$OWNER/$REPO_NAME/actions/runs?per_page=100" \
+              | jq '[.[].workflow_runs[] | select(.path == ".github/workflows/setup.yml" and .conclusion == "success")] | length')
+
+            if [ "$SETUP_SUCCESSES" -gt 0 ]; then
+              echo "::error title=Repository Already Provisioned::$OWNER/$REPO_NAME already ran Setup successfully. Nothing to provision; if the other repository failed, re-run only the failed jobs."
+              exit 1
+            fi
+
+            echo "::warning title=Repository Already Exists::$OWNER/$REPO_NAME already exists; resuming its provisioning."
+          elif grep -q 'HTTP 404' <<< "$ERROR"; then
+            echo "Creating repository $OWNER/$REPO_NAME from template..."
+            gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy-data" --private
+          else
+            echo "::error title=Repository Lookup Failed::Could not check $OWNER/$REPO_NAME: $ERROR"
+            exit 1
+          fi
 
       - name: Generate GitHub App Token
         id: app-token
@@ -93,20 +117,43 @@ jobs:
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ env.OWNER }}
 
+      - name: Provision Workshop Environment
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          
+          echo "Setting branch policies to workshop..."
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/environments/workshop" \
+            -F 'deployment_branch_policy[custom_branch_policies]=true' \
+            -F 'deployment_branch_policy[protected_branches]=false'
+          
+          MASTER_POLICY_ID=$(gh api "repos/$OWNER/$REPO_NAME/environments/workshop/deployment-branch-policies" \
+            --jq '.branch_policies[] | select(.name == "master") | .id')
+
+          if [ -n "$MASTER_POLICY_ID" ]; then
+            echo "The master branch policy already exists (id $MASTER_POLICY_ID); leaving it untouched."
+          else
+            echo "Setting restrictions to master branch..."
+            gh api --method POST "repos/$OWNER/$REPO_NAME/environments/workshop/deployment-branch-policies" \
+              -f name=master -f type=branch
+          fi
+          
+          echo "Setting secrets for Workshop..."
+          gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
+
       - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           YEAR: ${{ needs.verify.outputs.year }}
         run: |
           set -euo pipefail
-          echo "Setting secrets for Actions..."
-          gh secret set AOC_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
-          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
           
-          echo "Setting AOC_YEAR variable for workflows..."
+          echo "Setting variables for Actions..."
           gh variable set AOC_YEAR --repo "$OWNER/$REPO_NAME" --body "$YEAR"
           
       - name: Enable Auto-Merge
@@ -141,6 +188,9 @@ jobs:
   bootstrap-solutions-repo:
     needs: [ verify, bootstrap-data-repo ]
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     env:
       REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
       OWNER: ${{ github.repository_owner }}
@@ -152,8 +202,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Creating repository $OWNER/$REPO_NAME from template..."
-          gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+          set -euo pipefail
+
+          if ERROR=$(gh api "repos/$OWNER/$REPO_NAME" --silent 2>&1); then
+            # Paginated: a single page can miss the old Setup run in a busy repository.
+            SETUP_SUCCESSES=$(gh api --paginate --slurp "repos/$OWNER/$REPO_NAME/actions/runs?per_page=100" \
+              | jq '[.[].workflow_runs[] | select(.path == ".github/workflows/setup.yml" and .conclusion == "success")] | length')
+
+            if [ "$SETUP_SUCCESSES" -gt 0 ]; then
+              echo "::error title=Repository Already Provisioned::$OWNER/$REPO_NAME already ran Setup successfully. Nothing to provision; if the other repository failed, re-run only the failed jobs."
+              exit 1
+            fi
+
+            echo "::warning title=Repository Already Exists::$OWNER/$REPO_NAME already exists; resuming its provisioning."
+          elif grep -q 'HTTP 404' <<< "$ERROR"; then
+            echo "Creating repository $OWNER/$REPO_NAME from template..."
+            gh repo create "$REPO_NAME" --template "Flashky/advent-of-code-yyyy" --public
+          else
+            echo "::error title=Repository Lookup Failed::Could not check $OWNER/$REPO_NAME: $ERROR"
+            exit 1
+          fi
 
       - name: Generate GitHub App Token
         id: app-token
@@ -179,12 +247,38 @@ jobs:
           echo "::add-mask::$PROJECT_TOKEN"
           echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
 
+      - name: Provision Workshop Environment
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          
+          echo "Setting branch policies to workshop..."
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/environments/workshop" \
+            -F 'deployment_branch_policy[custom_branch_policies]=true' \
+            -F 'deployment_branch_policy[protected_branches]=false'
+          
+          MASTER_POLICY_ID=$(gh api "repos/$OWNER/$REPO_NAME/environments/workshop/deployment-branch-policies" \
+            --jq '.branch_policies[] | select(.name == "master") | .id')
+
+          if [ -n "$MASTER_POLICY_ID" ]; then
+            echo "The master branch policy already exists (id $MASTER_POLICY_ID); leaving it untouched."
+          else
+            echo "Setting restrictions to master branch..."
+            gh api --method POST "repos/$OWNER/$REPO_NAME/environments/workshop/deployment-branch-policies" \
+              -f name=master -f type=branch
+          fi
+          
+          echo "Setting secrets for Workshop..."
+          gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
+
       - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
           AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
@@ -193,13 +287,11 @@ jobs:
           set -euo pipefail
           
           echo "Setting secrets for Actions..."
-          gh secret set AOC_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
-          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
           gh secret set AOC_CI_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID" 
           gh secret set AOC_CI_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"  
           gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
           
-          echo "Setting AOC_YEAR variable for workflows..."
+          echo "Setting variables for Actions..."
           gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting secrets for Dependabot..."
@@ -229,14 +321,29 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           RULESET_FILE: ".github/settings/branch-protection-ruleset.json"
         run: |
-          
+          set -euo pipefail
+
           if [ ! -f "$RULESET_FILE" ]; then
-            echo "::error title=Ruleset Missing::Ruleset file not found at $RULESET_FILE, skipping."
-            exit 1    
+            echo "::error title=Ruleset Missing::Ruleset file not found at $RULESET_FILE."
+            exit 1
           fi
-          
-          echo "Importing branch protection ruleset into $REPO_NAME..."
-          gh api "repos/$OWNER/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
+
+          RULESET_NAME=$(jq -r '.name' "$RULESET_FILE")
+          # Paginated: a repository can hold more rulesets than fit in one page.
+          RULESET_ID=$(gh api --paginate --slurp "repos/$OWNER/$REPO_NAME/rulesets" \
+            | jq -r --arg name "$RULESET_NAME" '.[][] | select(.name == $name) | .id' \
+            | head -n 1)
+
+          if [ -n "$RULESET_ID" ]; then
+            echo "Ruleset '$RULESET_NAME' already exists (id $RULESET_ID); updating it..."
+            # source_type is read-only: the update endpoint rejects it.
+            jq 'del(.source_type)' "$RULESET_FILE" \
+              | gh api "repos/$OWNER/$REPO_NAME/rulesets/$RULESET_ID" --method PUT --input -
+          else
+            echo "Importing branch protection ruleset into $REPO_NAME..."
+            gh api "repos/$OWNER/$REPO_NAME/rulesets" --method POST --input "$RULESET_FILE"
+          fi
+
           echo "Ruleset successfully applied!"
 
       - name: Trigger Setup Workflow
