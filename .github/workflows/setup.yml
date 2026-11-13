@@ -258,12 +258,15 @@ jobs:
         run: |
           set -euo pipefail
           REPO="${{ github.repository }}"
+          URL="repos/$REPO/environments/workshop"
 
-          if ! gh api "repos/$REPO/environments/workshop" >/dev/null 2>&1; then
-            echo "::warning title=Environment not found::The workshop environment does not exist in $REPO; nothing to delete."
-            exit 0
+          if ERR=$(gh api "$URL" 2>&1); then
+            echo "Deleting the workshop environment from $REPO..."
+            gh api --method DELETE "$URL"
+            echo "Environment deleted."
+          elif grep -q 'HTTP 404' <<< "$ERR"; then
+            echo "::warning title=Environment not found::workshop does not exist in $REPO; nothing to delete."
+          else
+            echo "::error title=Environment lookup failed::Could not check the workshop environment: $ERR"
+            exit 1
           fi
-
-          echo "Deleting the workshop environment from $REPO..."
-          gh api --method DELETE "repos/$REPO/environments/workshop"
-          echo "Environment deleted. Its secrets and branch policy went with it."
