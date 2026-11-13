@@ -6,6 +6,9 @@ jobs:
 
   verify:
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     steps:
     - name: Restrict to Default Branch
       env:
@@ -44,8 +47,11 @@ jobs:
         exit "$MISSING"
 
   discover:
-    runs-on: ubuntu-26.04
     needs: verify
+    runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     outputs:
       repos: ${{ steps.list.outputs.repos }}
     steps:
@@ -76,10 +82,13 @@ jobs:
 
   update:
     needs: discover
+    runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     concurrency:
       group: update-${{ matrix.repo }}
       cancel-in-progress: false
-    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:

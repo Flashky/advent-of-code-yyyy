@@ -12,6 +12,9 @@ env:
 jobs:
   verify:
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     outputs:
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
@@ -74,6 +77,9 @@ jobs:
   update:
     needs: verify
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -243,3 +249,21 @@ jobs:
             echo "All checks are currently met. Merging directly"
             gh pr merge "$PR_URL" --squash --delete-branch
           fi
+
+      # No `if:` on purpose: a step only runs when everything before it succeeded,
+      # so a failed run keeps the environment and its secrets for a retry.
+      - name: Delete Workshop Environment
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+
+          if ! gh api "repos/$REPO/environments/workshop" >/dev/null 2>&1; then
+            echo "::warning title=Environment not found::The workshop environment does not exist in $REPO; nothing to delete."
+            exit 0
+          fi
+
+          echo "Deleting the workshop environment from $REPO..."
+          gh api --method DELETE "repos/$REPO/environments/workshop"
+          echo "Environment deleted. Its secrets and branch policy went with it."

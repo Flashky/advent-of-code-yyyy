@@ -11,6 +11,9 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     outputs:
       year: ${{ steps.set-vars.outputs.year }}
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
@@ -73,6 +76,9 @@ jobs:
   bootstrap-data-repo:
     needs: verify
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     env:
       REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
       OWNER: ${{ github.repository_owner }}
@@ -93,20 +99,36 @@ jobs:
           private-key: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           owner: ${{ env.OWNER }}
 
+      - name: Provision Workshop Environment
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          
+          echo "Setting branch policies to workshop..."
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/environments/workshop" \
+            -F 'deployment_branch_policy[custom_branch_policies]=true' \
+            -F 'deployment_branch_policy[protected_branches]=false'
+          
+          echo "Setting restrictions to master branch..."
+          gh api --method POST "repos/$OWNER/$REPO_NAME/environments/workshop/deployment-branch-policies" \
+            -f name=master -f type=branch
+          
+          echo "Setting secrets for Workshop..."
+          gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
+
       - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           YEAR: ${{ needs.verify.outputs.year }}
         run: |
           set -euo pipefail
-          echo "Setting secrets for Actions..."
-          gh secret set AOC_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
-          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
           
-          echo "Setting AOC_YEAR variable for workflows..."
+          echo "Setting variables for Actions..."
           gh variable set AOC_YEAR --repo "$OWNER/$REPO_NAME" --body "$YEAR"
           
       - name: Enable Auto-Merge
@@ -141,6 +163,9 @@ jobs:
   bootstrap-solutions-repo:
     needs: [ verify, bootstrap-data-repo ]
     runs-on: ubuntu-26.04
+    environment:
+      name: workshop
+      deployment: false
     env:
       REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
       OWNER: ${{ github.repository_owner }}
@@ -179,12 +204,31 @@ jobs:
           echo "::add-mask::$PROJECT_TOKEN"
           echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
 
+      - name: Provision Workshop Environment
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
+          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          
+          echo "Setting branch policies to workshop..."
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/environments/workshop" \
+            -F 'deployment_branch_policy[custom_branch_policies]=true' \
+            -F 'deployment_branch_policy[protected_branches]=false'
+          
+          echo "Setting restrictions to master branch..."
+          gh api --method POST "repos/$OWNER/$REPO_NAME/environments/workshop/deployment-branch-policies" \
+            -f name=master -f type=branch
+          
+          echo "Setting secrets for Workshop..."
+          gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
+
       - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
-          AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
           AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
           AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
@@ -193,13 +237,11 @@ jobs:
           set -euo pipefail
           
           echo "Setting secrets for Actions..."
-          gh secret set AOC_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
-          gh secret set AOC_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
           gh secret set AOC_CI_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID" 
           gh secret set AOC_CI_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"  
           gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
           
-          echo "Setting AOC_YEAR variable for workflows..."
+          echo "Setting variables for Actions..."
           gh variable set AOC_YEAR --body "$YEAR" --repo "$OWNER/$REPO_NAME"
           
           echo "Setting secrets for Dependabot..."
