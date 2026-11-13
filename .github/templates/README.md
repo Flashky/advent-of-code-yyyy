@@ -27,12 +27,33 @@
 - [Day 24](https://github.com/Flashky/advent-of-code-yyyy/tree/master/src/main/java/com/adventofcode/flashk/day24)
 - [Day 25](https://github.com/Flashky/advent-of-code-yyyy/tree/master/src/main/java/com/adventofcode/flashk/day25)
 
+## Required secrets
+
+The repository must have the following secrets declared under both **Actions** and **Dependabot** secrets:
+
+| Secret | Purpose |
+|---|---|
+| `AOC_CI_APP_CLIENT_ID` | Client ID of the GitHub App to be used by CI build workflows |
+| `AOC_CI_APP_PRIVATE_KEY` | Private key of the GitHub App CI to be used by CI build workflows |
+| `CODACY_PROJECT_TOKEN` | *(Optional)* Needed for sending reports to Codacy. No reports will be sent if it is not present |
+
+The only **required permission** the GitHub App must have is **Repository Contents** (`read`). 
+The GitHub App must be installed in both the solutions and data repository so the build can successfully complete.
+  
+These secrets will be **provisioned automatically** if the repo has been created using the template repository [repository creation workflow](https://github.com/Flashky/advent-of-code-yyyy/actions/workflows/create-repo.yml).
+
 ## Cloning this repository
 
 Clone with data repository:
 
 ```bash
 git clone https://github.com/Flashky/advent-of-code-yyyy.git --recurse-submodules
+```
+
+The data repository is private, so use the following command if you are not the repository owner:
+
+```bash
+git clone https://github.com/Flashky/advent-of-code-yyyy.git
 ```
 
 ## Update data submodule
@@ -53,4 +74,4 @@ git checkout master
 
 ## About
 
-- [Advent of Code](https://adventofcode.com/yyyy/about)
+- [Advent of Code](https://adventofcode.com/about)
