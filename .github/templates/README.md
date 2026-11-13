@@ -38,7 +38,7 @@ The repository must have the following secrets declared under both **Actions** a
 | `CODACY_PROJECT_TOKEN` | *(Optional)* Needed for sending reports to Codacy. No reports will be sent if it is not present |
 
 The only **required permission** the GitHub App must have is **Repository Contents** (`read`). 
-The GitHub App must be installed in both the solutions and data repository.
+The GitHub App must be installed in both the solutions and data repository so the build can successfully complete.
   
 These secrets will be **provisioned automatically** if the repo has been created using the template repository [repository creation workflow](https://github.com/Flashky/advent-of-code-yyyy/actions/workflows/create-repo.yml).
 
