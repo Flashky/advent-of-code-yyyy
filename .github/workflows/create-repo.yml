@@ -91,8 +91,9 @@ jobs:
           set -euo pipefail
 
           if ERROR=$(gh api "repos/$OWNER/$REPO_NAME" --silent 2>&1); then
-            SETUP_SUCCESSES=$(gh api "repos/$OWNER/$REPO_NAME/actions/runs?per_page=100" \
-              --jq '[.workflow_runs[] | select(.name == "Setup" and .conclusion == "success")] | length')
+            # Paginated: a single page can miss the old Setup run in a busy repository.
+            SETUP_SUCCESSES=$(gh api --paginate --slurp "repos/$OWNER/$REPO_NAME/actions/runs?per_page=100" \
+              | jq '[.[].workflow_runs[] | select(.path == ".github/workflows/setup.yml" and .conclusion == "success")] | length')
 
             if [ "$SETUP_SUCCESSES" -gt 0 ]; then
               echo "::error title=Repository Already Provisioned::$OWNER/$REPO_NAME already ran Setup successfully. Nothing to provision; if the other repository failed, re-run only the failed jobs."
@@ -204,8 +205,9 @@ jobs:
           set -euo pipefail
 
           if ERROR=$(gh api "repos/$OWNER/$REPO_NAME" --silent 2>&1); then
-            SETUP_SUCCESSES=$(gh api "repos/$OWNER/$REPO_NAME/actions/runs?per_page=100" \
-              --jq '[.workflow_runs[] | select(.name == "Setup" and .conclusion == "success")] | length')
+            # Paginated: a single page can miss the old Setup run in a busy repository.
+            SETUP_SUCCESSES=$(gh api --paginate --slurp "repos/$OWNER/$REPO_NAME/actions/runs?per_page=100" \
+              | jq '[.[].workflow_runs[] | select(.path == ".github/workflows/setup.yml" and .conclusion == "success")] | length')
 
             if [ "$SETUP_SUCCESSES" -gt 0 ]; then
               echo "::error title=Repository Already Provisioned::$OWNER/$REPO_NAME already ran Setup successfully. Nothing to provision; if the other repository failed, re-run only the failed jobs."
@@ -327,8 +329,10 @@ jobs:
           fi
 
           RULESET_NAME=$(jq -r '.name' "$RULESET_FILE")
-          RULESET_ID=$(gh api "repos/$OWNER/$REPO_NAME/rulesets" \
-            | jq -r --arg name "$RULESET_NAME" '.[] | select(.name == $name) | .id')
+          # Paginated: a repository can hold more rulesets than fit in one page.
+          RULESET_ID=$(gh api --paginate --slurp "repos/$OWNER/$REPO_NAME/rulesets" \
+            | jq -r --arg name "$RULESET_NAME" '.[][] | select(.name == $name) | .id' \
+            | head -n 1)
 
           if [ -n "$RULESET_ID" ]; then
             echo "Ruleset '$RULESET_NAME' already exists (id $RULESET_ID); updating it..."
