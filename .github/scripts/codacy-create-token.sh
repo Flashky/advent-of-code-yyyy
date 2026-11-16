@@ -2,6 +2,7 @@
 # =================================================================================
 # Usage:       ./codacy-create-token.sh <owner> <repository-name>
 # Description: Generates a project-level Codacy token for the specified repository.
+#              Requires jq: the response is parsed as JSON, not with grep/sed.
 # Example:     ./codacy-create-token.sh Flashky advent-of-code-2026
 # =================================================================================
 
@@ -14,6 +15,11 @@ REPOSITORY="${2:?Usage: $0 <owner> <repository-name>}"
 # Validations
 
 : "${CODACY_API_TOKEN:?CODACY_API_TOKEN is not set}"
+
+command -v jq > /dev/null 2>&1 || {
+  echo "::error title=Missing Tool::jq is required to parse the Codacy API response."
+  exit 1
+}
 
 for value in "$ORGANIZATION" "$REPOSITORY"; do
   [[ "$value" =~ ^[A-Za-z0-9_.-]+$ ]] || {
@@ -39,20 +45,21 @@ HTTP_STATUS=$(curl -sSX POST "https://app.codacy.com/api/v3/organizations/$GIT_P
 # Check results
 if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
 
-  # Extract the token
-  TOKEN=$(grep -o -m1 '"token"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | sed 's/.*:"\(.*\)"/\1/' || true)
-
-  # Print the token
-  if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+  # `jq -e` fails on malformed JSON and on a missing or empty token, so a broken
+  # response can never be mistaken for a valid token.
+  if TOKEN=$(jq -er '.token | select(type == "string" and length > 0)' "$RESPONSE_FILE" 2>/dev/null); then
     echo "$TOKEN"
     exit 0
   fi
+
+  echo "::error title=Codacy Token Error::Codacy returned HTTP $HTTP_STATUS without a usable token (invalid JSON or missing field)."
+  exit 1
 fi
 
 # Error cases - Log the error
 if [ -s "$RESPONSE_FILE" ]; then
-  ERR_TITLE=$(grep -o -m1 '"error"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | sed 's/.*:"\(.*\)"/\1/' || true)
-  ERR_MSG=$(grep -o -m1 '"message"[[:space:]]*:[[:space:]]*"[^"]*"' "$RESPONSE_FILE" | sed 's/.*:"\(.*\)"/\1/' || true)
+  ERR_TITLE=$(jq -r '.error // empty' "$RESPONSE_FILE" 2>/dev/null || true)
+  ERR_MSG=$(jq -r '.message // empty' "$RESPONSE_FILE" 2>/dev/null || true)
 
   ERR_TITLE="${ERR_TITLE:-Error}"
   ERR_MSG="${ERR_MSG:-$(cat "$RESPONSE_FILE")}"
