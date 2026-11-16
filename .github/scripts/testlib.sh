@@ -15,13 +15,15 @@ setup_stub() {
   : > "$GH_CALLS"
 
   mkdir -p "$TEST_WORK_DIR/bin"
+  export GH_STDIN="$TEST_WORK_DIR/stdin"
+  : > "$GH_STDIN"
   cat > "$TEST_WORK_DIR/bin/gh" <<'STUB'
 #!/bin/bash
 printf '%s\n' "$*" >> "$GH_CALLS"
-# `gh api --input -` reads the body from stdin; consume it, or the producer dies
-# with SIGPIPE when this stub exits without reading.
+# `gh api --input -` reads the body from stdin; keep it so a test can assert what
+# was sent, and consume it either way or the producer dies with SIGPIPE.
 case " $* " in
-  *" --input - "*) cat > /dev/null ;;
+  *" --input - "*) cat > "$GH_STDIN" ;;
 esac
 if declare -F gh_handler > /dev/null; then
   gh_handler "$@"
@@ -75,6 +77,15 @@ expect_no_output() {
     fail "$1" "la salida contiene '$2' -> $RUN_OUTPUT"
   else
     pass "$1: sin salida"
+  fi
+}
+
+# expect_stdin <name> <jq expression that must hold>
+expect_stdin() {
+  if jq -e "$2" "$GH_STDIN" > /dev/null 2>&1; then
+    pass "$1: cuerpo"
+  else
+    fail "$1" "el cuerpo enviado no cumple '$2' -> $(cat "$GH_STDIN" 2>/dev/null)"
   fi
 }
 

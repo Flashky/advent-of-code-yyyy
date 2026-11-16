@@ -37,6 +37,8 @@ expect_status "ruleset existente" 0
 expect_output "ruleset existente" "Ruleset 'Master branch protection' already exists (id 7); updating it..."
 expect_call "ruleset existente" "api repos/Flashky/repo/rulesets/7 --method PUT --input -"
 expect_no_call "ruleset existente" "--method POST"
+# source_type is read-only: the update endpoint rejects the body if it is still there.
+expect_stdin "ruleset existente" '.source_type == null and .name == "Master branch protection"'
 
 : > "$GH_CALLS"
 run_script "$SCRIPT_DIR/import-ruleset.sh" Flashky repo "$TEST_WORK_DIR/missing.json"

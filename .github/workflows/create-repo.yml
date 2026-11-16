@@ -8,6 +8,13 @@ on:
         required: true
         type: string
 
+# Two dispatches for the same year would race while provisioning the same pair of
+# repositories; the second one belongs after the first, where the "already
+# provisioned" guard can decide what to do.
+concurrency:
+  group: create-repo-${{ inputs.aoc_year }}
+  cancel-in-progress: false
+
 jobs:
   verify:
     runs-on: ubuntu-26.04
