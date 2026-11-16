@@ -19,6 +19,9 @@ jobs:
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
       - name: Prevent Execution on Template Repository
         run: |
           set -euo pipefail
@@ -63,16 +66,7 @@ jobs:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
-        run: |
-          set -uo pipefail
-          MISSING=0
-          for name in CODACY_PROJECT_TOKEN AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error title=Missing Secret::$name secret is not set."
-              MISSING=1
-            fi
-          done
-          exit "$MISSING"
+        run: bash .github/scripts/check-required-secrets.sh CODACY_PROJECT_TOKEN AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY
 
   update:
     needs: verify

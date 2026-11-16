@@ -25,20 +25,31 @@ jobs:
       skip_report_status: ${{ steps.check-codacy-token.outputs.skip_status }}
     steps:
 
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
       - name: Check Required Secrets
         env:
           AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
           AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
+        run: bash .github/scripts/check-required-secrets.sh AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY
+
+      - name: ShellCheck
         run: |
-          set -uo pipefail
-          MISSING=0
-          for name in AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error title=Missing Secret::$name secret is not set."
-              MISSING=1
-            fi
+          if ! command -v shellcheck > /dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq shellcheck
+          fi
+          shellcheck --version
+          shellcheck .github/scripts/*.sh
+
+      - name: Test workflow scripts
+        run: |
+          set -euo pipefail
+          for test in .github/scripts/*.test.sh; do
+            echo "--- $test"
+            bash "$test"
           done
-          exit "$MISSING"
 
       # Codacy token is optional, in case of not wanting Codacy reports
       - name: Check Codacy Project Token
