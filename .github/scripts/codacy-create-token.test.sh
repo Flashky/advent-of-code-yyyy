@@ -32,9 +32,14 @@ printf '%s' "${FAKE_CURL_STATUS:-200}"
 STUB
 chmod +x "$WORK_DIR/bin/curl"
 
-# run_case <name> <status> <body> <expected-exit> <expected-fragment>
+# run_case <name> <status> <body> <expected-exit> <expected> [exact] [forbidden]
+#   exact:     the whole output must be <expected>, so echoing the response back
+#              instead of extracting the token does not pass.
+#   forbidden: no line of the output may start with this prefix, which is how a
+#              workflow command smuggled in the response would surface.
 run_case() {
   local name="$1" status="$2" body="$3" expected_exit="$4" expected="$5"
+  local mode="${6:-substring}" forbidden="${7:-}"
   local output rc
   set +e
   output=$(PATH="$WORK_DIR/bin:$PATH" \
@@ -48,20 +53,31 @@ run_case() {
   if [ "$rc" -ne "$expected_exit" ]; then
     echo "FAIL $name: exit $rc (esperado $expected_exit) -> $output"
     FAILURES=$((FAILURES + 1))
-  elif [[ "$output" != *"$expected"* ]]; then
+  elif [ "$mode" = "exact" ] && [ "$output" != "$expected" ]; then
+    echo "FAIL $name: salida '$output' (esperado exactamente '$expected')"
+    FAILURES=$((FAILURES + 1))
+  elif [ "$mode" != "exact" ] && [[ "$output" != *"$expected"* ]]; then
     echo "FAIL $name: no contiene '$expected' -> $output"
+    FAILURES=$((FAILURES + 1))
+  elif [ -n "$forbidden" ] && grep -q "^${forbidden}" <<< "$output"; then
+    echo "FAIL $name: una línea empieza por '$forbidden' -> $output"
     FAILURES=$((FAILURES + 1))
   else
     echo "ok   $name"
   fi
 }
 
-run_case "token válido" 200 '{"token":"abc123"}' 0 "abc123"
-run_case "token tras otras claves" 200 '{"expiresAt":"2027-01-01","token":"xyz789"}' 0 "xyz789"
+run_case "token válido" 200 '{"token":"abc123"}' 0 "abc123" exact
+run_case "token tras otras claves" 200 '{"expiresAt":"2027-01-01","token":"xyz789"}' 0 "xyz789" exact
 run_case "token ausente" 200 '{"message":"ok"}' 1 "without a usable token"
 run_case "token nulo" 200 '{"token":null}' 1 "without a usable token"
 run_case "JSON malformado" 200 '{"token":"abc123"' 1 "without a usable token"
+run_case "dos documentos JSON" 200 '{"token":"a"} {"token":"b"}' 1 "without a usable token"
+run_case "token con salto de línea" 200 '{"token":"abc\nname=injected"}' 1 "without a usable token" substring "name=injected"
+run_case "token con tabulador" 200 '{"token":"abc\tdef"}' 1 "without a usable token"
 run_case "error de la API" 404 '{"error":"Not Found","message":"repository not found"}' 1 "404 Not Found: repository not found"
+run_case "error con comando de workflow" 404 '{"error":"Not Found","message":"a\n::warning::b"}' 1 "404 Not Found: a ::warning::b" substring "::warning::"
+run_case "error con objeto en error" 500 '{"error":{"code":1}}' 1 "500 Error:"
 run_case "respuesta vacía" 500 '' 1 "Empty response from server."
 
 if [ "$FAILURES" -ne 0 ]; then

@@ -45,24 +45,29 @@ HTTP_STATUS=$(curl -sSX POST "https://app.codacy.com/api/v3/organizations/$GIT_P
 # Check results
 if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
 
-  # `jq -e` fails on malformed JSON and on a missing or empty token, so a broken
-  # response can never be mistaken for a valid token.
-  if TOKEN=$(jq -er '.token | select(type == "string" and length > 0)' "$RESPONSE_FILE" 2>/dev/null); then
+  # `-s` slurps the body, so a stream of two documents is one value and not two:
+  # the caller writes this token straight into `$GITHUB_OUTPUT`, where an extra
+  # line would become an output nobody asked for. `jq -e` fails on malformed JSON
+  # and on a missing field, and the token has to be a single run of printable
+  # ASCII, so neither a newline nor a tab can get through.
+  if TOKEN=$(jq -ser 'if length == 1 then .[0].token | select(type == "string" and test("^[!-~]+$")) else empty end' "$RESPONSE_FILE" 2>/dev/null); then
     echo "$TOKEN"
     exit 0
   fi
 
-  echo "::error title=Codacy Token Error::Codacy returned HTTP $HTTP_STATUS without a usable token (invalid JSON or missing field)."
+  echo "::error title=Codacy Token Error::Codacy returned HTTP $HTTP_STATUS without a usable token (invalid JSON, missing field or an unusable value)."
   exit 1
 fi
 
-# Error cases - Log the error
+# Error cases - Log the error, flattened to a single line: a value carrying a
+# newline would otherwise start a line of its own, and Actions would read what
+# follows as a workflow command (`::warning::`, `::add-mask::`, ...).
 if [ -s "$RESPONSE_FILE" ]; then
-  ERR_TITLE=$(jq -r '.error // empty' "$RESPONSE_FILE" 2>/dev/null || true)
-  ERR_MSG=$(jq -r '.message // empty' "$RESPONSE_FILE" 2>/dev/null || true)
+  ERR_TITLE=$(jq -r '(.error // empty) | strings | gsub("[[:cntrl:]]+"; " ")' "$RESPONSE_FILE" 2>/dev/null || true)
+  ERR_MSG=$(jq -r '(.message // empty) | strings | gsub("[[:cntrl:]]+"; " ")' "$RESPONSE_FILE" 2>/dev/null || true)
 
   ERR_TITLE="${ERR_TITLE:-Error}"
-  ERR_MSG="${ERR_MSG:-$(cat "$RESPONSE_FILE")}"
+  ERR_MSG="${ERR_MSG:-$(tr -s '[:space:]' ' ' < "$RESPONSE_FILE")}"
 
   echo "$HTTP_STATUS $ERR_TITLE: $ERR_MSG"
 else
