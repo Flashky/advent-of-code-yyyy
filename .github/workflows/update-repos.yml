@@ -172,7 +172,9 @@ jobs:
             rm -f "target/.github/workflows/$file"
           done
           mkdir -p target/.github/scripts
-          rm -f target/.github/scripts/*.sh
+          # Copy only, never delete: a script the target repository keeps for
+          # itself looks exactly like a template one. A script dropped from the
+          # template stays behind in the target, which is the harmless direction.
           cp template/.github/scripts/*.sh target/.github/scripts/
           git -C target status --short
 

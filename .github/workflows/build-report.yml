@@ -28,12 +28,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Check Required Secrets
-        env:
-          AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
-          AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
-        run: bash .github/scripts/check-required-secrets.sh AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY
-
       - name: ShellCheck
         run: |
           if ! command -v shellcheck > /dev/null 2>&1; then

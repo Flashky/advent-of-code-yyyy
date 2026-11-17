@@ -3,7 +3,9 @@
 # Usage:       sourced by the *.test.sh scripts
 # Description: Harness for the workflow script tests. It puts a stub `gh` first on
 #              PATH, records every call and lets each test answer them with a
-#              `gh_handler` function, so no request leaves the runner.
+#              `gh_handler` function, so no request leaves the runner. stdout and
+#              stderr are captured apart: a script's stdout is a contract (the
+#              caller captures it), warnings and errors are not.
 # =================================================================================
 
 FAILURES=0
@@ -35,13 +37,17 @@ STUB
   export PATH="$TEST_WORK_DIR/bin:$PATH"
 }
 
-# run_script <script> [arguments]...: leaves the status in RUN_STATUS and the
-# combined output in RUN_OUTPUT.
+# run_script <script> [arguments]...: leaves the status in RUN_STATUS, the stdout
+# in RUN_STDOUT and the stderr in RUN_STDERR.
 run_script() {
+  local stderr_file
+  stderr_file=$(mktemp)
   set +e
-  RUN_OUTPUT=$(bash "$@" 2>&1)
+  RUN_STDOUT=$(bash "$@" 2> "$stderr_file")
   RUN_STATUS=$?
   set -e
+  RUN_STDERR=$(cat "$stderr_file")
+  rm -f "$stderr_file"
 }
 
 pass() {
@@ -58,25 +64,53 @@ expect_status() {
   if [ "$RUN_STATUS" -eq "$2" ]; then
     pass "$1: exit"
   else
-    fail "$1" "exit $RUN_STATUS (esperado $2) -> $RUN_OUTPUT"
+    fail "$1" "exit $RUN_STATUS (esperado $2) -> stdout: $RUN_STDOUT · stderr: $RUN_STDERR"
   fi
 }
 
-# expect_output <name> <fragment>
-expect_output() {
-  if [[ "$RUN_OUTPUT" == *"$2"* ]]; then
-    pass "$1: salida"
+# expect_stdout <name> <fragment>
+expect_stdout() {
+  if [[ "$RUN_STDOUT" == *"$2"* ]]; then
+    pass "$1: stdout"
   else
-    fail "$1" "la salida no contiene '$2' -> $RUN_OUTPUT"
+    fail "$1" "stdout no contiene '$2' -> $RUN_STDOUT"
   fi
 }
 
-# expect_no_output <name> <fragment>
-expect_no_output() {
-  if [[ "$RUN_OUTPUT" == *"$2"* ]]; then
-    fail "$1" "la salida contiene '$2' -> $RUN_OUTPUT"
+# expect_stdout_is <name> <exact>: the whole stdout must match, so a stray line
+# next to the answer does not pass.
+expect_stdout_is() {
+  if [ "$RUN_STDOUT" = "$2" ]; then
+    pass "$1: stdout exacto"
   else
-    pass "$1: sin salida"
+    fail "$1" "stdout '$RUN_STDOUT' (esperado exactamente '$2')"
+  fi
+}
+
+# expect_no_stdout <name> <fragment>
+expect_no_stdout() {
+  if [[ "$RUN_STDOUT" == *"$2"* ]]; then
+    fail "$1" "stdout contiene '$2' -> $RUN_STDOUT"
+  else
+    pass "$1: stdout limpio"
+  fi
+}
+
+# expect_stderr <name> <fragment>
+expect_stderr() {
+  if [[ "$RUN_STDERR" == *"$2"* ]]; then
+    pass "$1: stderr"
+  else
+    fail "$1" "stderr no contiene '$2' -> $RUN_STDERR"
+  fi
+}
+
+# expect_no_stderr <name>
+expect_no_stderr() {
+  if [ -z "$RUN_STDERR" ]; then
+    pass "$1: sin stderr"
+  else
+    fail "$1" "stderr no está vacío -> $RUN_STDERR"
   fi
 }
 
@@ -95,6 +129,16 @@ expect_call() {
     pass "$1: llamada"
   else
     fail "$1" "no llamó a 'gh $2' -> $(tr '\n' '|' < "$GH_CALLS")"
+  fi
+}
+
+# expect_call_fragment <name> <fragment>: the invocation is partly unknown (a jq
+# filter with quotes), so only the part that identifies the endpoint is matched.
+expect_call_fragment() {
+  if grep -Fq -- "$2" "$GH_CALLS"; then
+    pass "$1: llamada"
+  else
+    fail "$1" "ninguna llamada contiene '$2' -> $(tr '\n' '|' < "$GH_CALLS")"
   fi
 }
 

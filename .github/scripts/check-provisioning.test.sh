@@ -2,7 +2,9 @@
 # =================================================================================
 # Usage:       ./check-provisioning.test.sh
 # Description: The answer the caller captures is `true`/`false` on stdout and
-#              nothing else; warnings and errors go to stderr. `gh` is stubbed.
+#              nothing else; warnings and errors go to stderr. A Setup run that is
+#              still going stops the caller, exactly like one that already
+#              succeeded. `gh` is stubbed and rejects any call it does not expect.
 # =================================================================================
 
 set -euo pipefail
@@ -37,7 +39,10 @@ gh_handler() {
       cat "$RUNS_FILE"
       return 0
       ;;
-    *) return 0 ;;
+    *)
+      echo "gh: unexpected call: $*" >&2
+      return 1
+      ;;
   esac
 }
 export -f gh_handler
@@ -49,31 +54,42 @@ check() {
 
 REPO_STATE=missing check
 expect_status "repo ausente: exit" 0
-expect_output "repo ausente: imprime false" "false"
-expect_no_output "repo ausente: no imprime true" "true"
+expect_stdout_is "repo ausente: stdout exacto" "false"
+expect_no_stderr "repo ausente: no avisa"
 expect_no_call "repo ausente: no consulta Setup" "actions/runs"
 
 REPO_STATE=exists check
 expect_status "repo existente sin Setup: exit" 0
-expect_output "repo existente sin Setup: imprime true" "true"
-expect_output "repo existente sin Setup: avisa que reanuda" "::warning title=Repository Already Exists::"
-expect_no_call "repo existente sin Setup: no crea" "repo create"
+expect_stdout_is "repo existente sin Setup: stdout exacto" "true"
+expect_stderr "repo existente sin Setup: avisa por stderr" "::warning title=Repository Already Exists::"
 
-printf '%s' '[{"workflow_runs":[{"path":".github/workflows/setup.yml","conclusion":"success"}]}]' > "$RUNS_FILE"
+printf '%s' '[{"workflow_runs":[{"path":".github/workflows/setup.yml","status":"completed","conclusion":"success"}]}]' > "$RUNS_FILE"
 REPO_STATE=exists check
 expect_status "repo ya aprovisionado: exit" 1
-expect_output "repo ya aprovisionado: se niega" "already ran Setup successfully"
-expect_no_output "repo ya aprovisionado: no responde true/false" "true"
+expect_stdout "repo ya aprovisionado: se niega" "already ran Setup successfully"
+expect_no_stdout "repo ya aprovisionado: no responde true" "true"
+
+printf '%s' '[{"workflow_runs":[{"path":".github/workflows/setup.yml","status":"in_progress","conclusion":null}]}]' > "$RUNS_FILE"
+REPO_STATE=exists check
+expect_status "Setup en curso: exit" 1
+expect_stdout "Setup en curso: se niega" "has a Setup run in progress"
+expect_no_stdout "Setup en curso: no responde true" "true"
+
+printf '%s' '[{"workflow_runs":[{"path":".github/workflows/setup.yml","status":"completed","conclusion":"failure"}]}]' > "$RUNS_FILE"
+REPO_STATE=exists check
+expect_status "Setup fallido: exit" 0
+expect_stdout_is "Setup fallido: reanuda" "true"
+expect_stderr "Setup fallido: avisa" "resuming its provisioning"
 
 REPO_STATE=broken check
 expect_status "lookup roto: exit" 1
-expect_output "lookup roto: falla" "Could not check Flashky/repo: gh: Internal Server Error (HTTP 500)"
+expect_stdout "lookup roto: falla" "Could not check Flashky/repo: gh: Internal Server Error (HTTP 500)"
 
 : > "$GH_CALLS"
 unset GH_TOKEN
 run_script "$SCRIPT_DIR/check-provisioning.sh" Flashky repo
 expect_status "sin token: exit" 1
-expect_output "sin token: lo dice" "GH_TOKEN is not set"
+expect_stderr "sin token: lo dice" "GH_TOKEN is not set"
 expect_no_call "sin token: no llama" "api"
 
 finish

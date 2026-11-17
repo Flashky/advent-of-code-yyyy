@@ -3,9 +3,9 @@
 # Usage:       ./check-provisioning.sh <owner> <repository>
 # Description: Read-only preflight for provisioning. Prints `true` when the
 #              repository already exists, so the caller resumes; `false` when it
-#              does not, so the caller creates it. Fails when a previous run
-#              already completed Setup: a half-provisioned workshop is worth
-#              retrying, a finished one is not. It never writes anything.
+#              does not, so the caller creates it. Fails when Setup is running or
+#              already finished: a half-provisioned workshop is worth retrying, one
+#              in the middle of Setup or already done is not. It never writes.
 # Example:     ./check-provisioning.sh Flashky advent-of-code-2026
 # =================================================================================
 
@@ -35,13 +35,24 @@ FULL_NAME="$ORGANIZATION/$REPOSITORY"
 
 if ERROR=$(gh api "repos/$FULL_NAME" --silent 2>&1); then
   # Paginated: a single page can miss the old Setup run in a busy repository.
-  SETUP_SUCCESSES=$(gh api --paginate --slurp "repos/$FULL_NAME/actions/runs?per_page=100" \
-    | jq '[.[].workflow_runs[] | select(.path == ".github/workflows/setup.yml" and .conclusion == "success")] | length')
+  # A run still going is neither "not started" nor "done": whichever way it ends,
+  # provisioning now would race it and leave the environment and secrets behind.
+  SETUP_STATE=$(gh api --paginate --slurp "repos/$FULL_NAME/actions/runs?per_page=100" \
+    | jq -r '[.[].workflow_runs[] | select(.path == ".github/workflows/setup.yml")]
+      | if any(.[]; .status != "completed") then "running"
+        elif any(.[]; .conclusion == "success") then "provisioned"
+        else "none" end')
 
-  if [ "$SETUP_SUCCESSES" -gt 0 ]; then
-    echo "::error title=Repository Already Provisioned::$FULL_NAME already ran Setup successfully. Nothing to provision; if the other repository failed, re-run only the failed jobs."
-    exit 1
-  fi
+  case "$SETUP_STATE" in
+    running)
+      echo "::error title=Setup In Progress::$FULL_NAME has a Setup run in progress. Wait for it and re-run only the jobs that failed; provisioning again would leave the workshop environment and its secrets behind."
+      exit 1
+      ;;
+    provisioned)
+      echo "::error title=Repository Already Provisioned::$FULL_NAME already ran Setup successfully. Nothing to provision; if the other repository failed, re-run only the failed jobs."
+      exit 1
+      ;;
+  esac
 
   # stderr: stdout is the answer the caller captures.
   echo "::warning title=Repository Already Exists::$FULL_NAME already exists; resuming its provisioning." >&2

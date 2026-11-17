@@ -9,8 +9,9 @@ on:
         type: string
 
 # Two dispatches for the same year would race while provisioning the same pair of
-# repositories; the second one belongs after the first, where the "already
-# provisioned" guard can decide what to do.
+# repositories. The active run is never canceled, and a newer pending dispatch
+# replaces an older one on purpose: a duplicate would repeat the same check and
+# stop in the same place, so one queued attempt is all the queue this needs.
 concurrency:
   group: create-repo-${{ inputs.aoc_year }}
   cancel-in-progress: false
