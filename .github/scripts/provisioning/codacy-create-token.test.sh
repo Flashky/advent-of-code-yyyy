@@ -41,17 +41,27 @@ run_case() {
   local name="$1" status="$2" body="$3" expected_exit="$4" expected="$5"
   local mode="${6:-substring}" forbidden="${7:-}"
   local output rc
+  local stdout_file="$WORK_DIR/stdout" stderr_file="$WORK_DIR/stderr"
   set +e
-  output=$(PATH="$WORK_DIR/bin:$PATH" \
+  PATH="$WORK_DIR/bin:$PATH" \
     CODACY_API_TOKEN=stub \
     FAKE_CURL_STATUS="$status" \
     FAKE_CURL_BODY="$body" \
-    bash "$TOKEN_SCRIPT" Flashky advent-of-code-2026 2>&1)
+    bash "$TOKEN_SCRIPT" Flashky advent-of-code-2026 > "$stdout_file" 2> "$stderr_file"
   rc=$?
   set -e
+  # The callers capture stdout in a variable: a diagnostic there is lost as soon
+  # as `set -e` ends the step, which is exactly what hid the Codacy error.
+  output=$(cat "$stdout_file" "$stderr_file")
 
   if [ "$rc" -ne "$expected_exit" ]; then
     echo "FAIL $name: exit $rc (esperado $expected_exit) -> $output"
+    FAILURES=$((FAILURES + 1))
+  elif [ "$expected_exit" -ne 0 ] && [ -s "$stdout_file" ]; then
+    echo "FAIL $name: el error fue a stdout, donde el caller lo captura y pierde -> $(cat "$stdout_file")"
+    FAILURES=$((FAILURES + 1))
+  elif [ "$expected_exit" -eq 0 ] && [ -s "$stderr_file" ]; then
+    echo "FAIL $name: el éxito escribió en stderr -> $(cat "$stderr_file")"
     FAILURES=$((FAILURES + 1))
   elif [ "$mode" = "exact" ] && [ "$output" != "$expected" ]; then
     echo "FAIL $name: salida '$output' (esperado exactamente '$expected')"

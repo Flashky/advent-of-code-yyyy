@@ -33,12 +33,15 @@ RESPONSE_FILE=$(mktemp)
 trap 'rm -f "$RESPONSE_FILE"' EXIT
 
 # Generate a token
+# This script's stdout is the token and nothing else: the callers capture it in
+# a variable, so anything written there is swallowed when the step fails. Every
+# diagnostic, including workflow annotations, goes to stderr.
 HTTP_STATUS=$(curl -sSX POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
      -H "api-token: $CODACY_API_TOKEN" \
      -w "%{http_code}" \
      -o "$RESPONSE_FILE") || {
    rc=$?
-   echo "::error title=Codacy API::Request to Codacy failed (curl exit $rc)"
+   echo "::error title=Codacy API::Request to Codacy failed (curl exit $rc)" >&2
    exit 1
 }
 
@@ -55,7 +58,7 @@ if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
     exit 0
   fi
 
-  echo "::error title=Codacy Token Error::Codacy returned HTTP $HTTP_STATUS without a usable token (invalid JSON, missing field or an unusable value)."
+  echo "::error title=Codacy Token Error::Codacy returned HTTP $HTTP_STATUS without a usable token (invalid JSON, missing field or an unusable value)." >&2
   exit 1
 fi
 
@@ -69,11 +72,11 @@ if [ -s "$RESPONSE_FILE" ]; then
   ERR_TITLE="${ERR_TITLE:-Error}"
   ERR_MSG="${ERR_MSG:-$(tr -s '[:space:]' ' ' < "$RESPONSE_FILE")}"
 
-  echo "$HTTP_STATUS $ERR_TITLE: $ERR_MSG"
+  echo "$HTTP_STATUS $ERR_TITLE: $ERR_MSG" >&2
 else
-  echo "$HTTP_STATUS Error: Empty response from server."
+  echo "$HTTP_STATUS Error: Empty response from server." >&2
 fi
 
-echo "::error title=Codacy Token Error::Failed to generate Codacy token."
+echo "::error title=Codacy Token Error::Failed to generate Codacy token." >&2
 
 exit 1
