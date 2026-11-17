@@ -8,14 +8,6 @@ on:
         required: true
         type: string
 
-# Two dispatches for the same year would race while provisioning the same pair of
-# repositories. The active run is never canceled, and a newer pending dispatch
-# replaces an older one on purpose: a duplicate would repeat the same check and
-# stop in the same place, so one queued attempt is all the queue this needs.
-concurrency:
-  group: create-repo-${{ inputs.aoc_year }}
-  cancel-in-progress: false
-
 jobs:
   verify:
     runs-on: ubuntu-26.04
@@ -101,7 +93,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
-          exists=$(bash .github/scripts/check-provisioning.sh "$OWNER" "$REPO_NAME")
+          exists=$(bash .github/scripts/provisioning/check-provisioning.sh "$OWNER" "$REPO_NAME")
           echo "exists=$exists" >> "$GITHUB_OUTPUT"
 
       - name: Create Data Repository
@@ -121,7 +113,7 @@ jobs:
       - name: Provision Workshop Environment
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: bash .github/scripts/provision-environment.sh "$OWNER" "$REPO_NAME"
+        run: bash .github/scripts/provisioning/provision-environment.sh "$OWNER" "$REPO_NAME"
 
       - name: Configure Environment Secrets
         env:
@@ -186,7 +178,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
-          exists=$(bash .github/scripts/check-provisioning.sh "$OWNER" "$REPO_NAME")
+          exists=$(bash .github/scripts/provisioning/check-provisioning.sh "$OWNER" "$REPO_NAME")
           echo "exists=$exists" >> "$GITHUB_OUTPUT"
 
       - name: Create Solutions Repository
@@ -206,7 +198,7 @@ jobs:
       - name: Register Repository in Codacy
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-        run: bash .github/scripts/codacy-add-repository.sh "$OWNER" "$REPO_NAME"
+        run: bash .github/scripts/provisioning/codacy-add-repository.sh "$OWNER" "$REPO_NAME"
 
       - name: Generate Codacy Project Token
         id: codacy-token
@@ -215,14 +207,14 @@ jobs:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           set -euo pipefail
-          PROJECT_TOKEN=$(bash .github/scripts/codacy-create-token.sh "$OWNER" "$REPO_NAME")
+          PROJECT_TOKEN=$(bash .github/scripts/provisioning/codacy-create-token.sh "$OWNER" "$REPO_NAME")
           echo "::add-mask::$PROJECT_TOKEN"
           echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
 
       - name: Provision Workshop Environment
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: bash .github/scripts/provision-environment.sh "$OWNER" "$REPO_NAME"
+        run: bash .github/scripts/provisioning/provision-environment.sh "$OWNER" "$REPO_NAME"
 
       - name: Configure Environment Secrets
         env:
@@ -271,7 +263,7 @@ jobs:
       - name: Import Branch Protection Ruleset
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash .github/scripts/import-ruleset.sh "$OWNER" "$REPO_NAME" .github/settings/branch-protection-ruleset.json
+        run: bash .github/scripts/provisioning/import-ruleset.sh "$OWNER" "$REPO_NAME" .github/settings/branch-protection-ruleset.json
 
       - name: Trigger Setup Workflow
         env:

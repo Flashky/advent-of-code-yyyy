@@ -206,9 +206,11 @@ jobs:
               submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
           fi
 
-      # Remove not needed workflows
-      - name: Remove not needed workflows
-        run: rm .github/workflows/setup.yml .github/workflows/create-repo.yml .github/workflows/update-repos.yml
+      # Remove template-only workflows and scripts
+      - name: Remove template-only workflows and scripts
+        run: |
+          rm .github/workflows/setup.yml .github/workflows/create-repo.yml .github/workflows/update-repos.yml
+          rm -r .github/scripts/provisioning
 
       # Open Pull Request
       - name: Open Pull Request

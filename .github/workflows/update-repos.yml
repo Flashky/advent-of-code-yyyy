@@ -134,7 +134,7 @@ jobs:
           if gh api "repos/$OWNER/$REPO_NAME/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
             echo "CODACY_PROJECT_TOKEN already set, leaving it untouched."
           else
-            token=$(bash template/.github/scripts/codacy-create-token.sh "$OWNER" "$REPO_NAME")
+            token=$(bash template/.github/scripts/provisioning/codacy-create-token.sh "$OWNER" "$REPO_NAME")
             echo "::add-mask::$token"
             gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$token"
           fi
@@ -155,7 +155,7 @@ jobs:
       - name: Import Branch Protection Ruleset
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash template/.github/scripts/import-ruleset.sh "$OWNER" "$REPO_NAME" template/.github/settings/branch-protection-ruleset.json
+        run: bash template/.github/scripts/provisioning/import-ruleset.sh "$OWNER" "$REPO_NAME" template/.github/settings/branch-protection-ruleset.json
 
       - name: Checkout target repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -177,6 +177,8 @@ jobs:
           # Copy only, never delete: a script the target repository keeps for
           # itself looks exactly like a template one. A script dropped from the
           # template stays behind in the target, which is the harmless direction.
+          # First level only: `provisioning/` runs from the template alone
+          # (create-repo and this workflow), so a target has no use for it.
           cp template/.github/scripts/*.sh target/.github/scripts/
           git -C target status --short
 

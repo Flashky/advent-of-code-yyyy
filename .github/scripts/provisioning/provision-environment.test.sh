@@ -12,7 +12,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/testlib.sh"
+source "$SCRIPT_DIR/../testlib.sh"
 
 setup_stub
 GH_TOKEN=stub

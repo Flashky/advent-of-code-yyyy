@@ -28,6 +28,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # A missing CI app secret stops the pipeline here instead of surfacing as an
+      # opaque error when `build` asks for the token. It is skipped on pull
+      # requests: forks have no secrets and a same-repository PR must not run its
+      # own tree's shell with the key in the environment.
+      - name: Check Required Secrets
+        if: github.event_name != 'pull_request'
+        env:
+          AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
+          AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
+        run: bash .github/scripts/check-required-secrets.sh AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY
+
       - name: ShellCheck
         run: |
           if ! command -v shellcheck > /dev/null 2>&1; then
@@ -35,12 +46,16 @@ jobs:
             sudo apt-get install -y -qq shellcheck
           fi
           shellcheck --version
-          shellcheck .github/scripts/*.sh
+          # Both levels: `provisioning/` is template-only, so a repository created
+          # from the template has only the top-level scripts.
+          shopt -s globstar
+          shellcheck .github/scripts/**/*.sh
 
       - name: Test workflow scripts
         run: |
           set -euo pipefail
-          for test in .github/scripts/*.test.sh; do
+          shopt -s globstar
+          for test in .github/scripts/**/*.test.sh; do
             echo "--- $test"
             bash "$test"
           done
