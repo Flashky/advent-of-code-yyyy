@@ -34,6 +34,8 @@ jobs:
         id: set-vars
         env:
           YEAR: ${{ inputs.aoc_year }}
+        # The script's stdout lines are `name=value` pairs; the redirection writes
+        # them to this step's outputs. Errors go to stderr, never into that file.
         run: bash .github/scripts/provisioning/validate-year.sh "$YEAR" >> "$GITHUB_OUTPUT"
 
       - name: Check Required Secrets

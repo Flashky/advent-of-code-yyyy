@@ -34,6 +34,8 @@ jobs:
         id: set-vars
         env:
           YEAR: ${{ vars.AOC_YEAR }}
+        # The script's stdout lines are `name=value` pairs; the redirection writes
+        # them to this step's outputs. Errors go to stderr, never into that file.
         run: bash .github/scripts/provisioning/validate-year.sh "$YEAR" >> "$GITHUB_OUTPUT"
 
       - name: Check Required Secrets
@@ -123,6 +125,8 @@ jobs:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
           OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        # The script's stdout lines are `name=value` pairs; the redirection writes
+        # them to this step's outputs. Warnings go to stderr, never into that file.
         run: bash .github/scripts/provisioning/fetch-codacy-badges.sh "$OWNER" "$REPO_NAME" >> "$GITHUB_OUTPUT"
 
       # Add Codacy badges

@@ -28,17 +28,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      # A missing CI app secret stops the pipeline here instead of surfacing as an
-      # opaque error when `build` asks for the token. It is skipped on pull
-      # requests: forks have no secrets and a same-repository PR must not run its
-      # own tree's shell with the key in the environment.
-      - name: Check Required Secrets
-        if: github.event_name != 'pull_request'
-        env:
-          AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
-          AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
-        run: bash .github/scripts/check-required-secrets.sh AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY
-
       - name: ShellCheck
         run: |
           if ! command -v shellcheck > /dev/null 2>&1; then
@@ -59,6 +48,18 @@ jobs:
             echo "--- $test"
             bash "$test"
           done
+
+      # ShellCheck and the tests validate the scripts before this step executes
+      # one of them with the CI app key in its environment. A missing secret still
+      # stops the pipeline here, on the trusted events, instead of surfacing as an
+      # opaque error in `build`. Pull requests skip it: forks have no secrets and a
+      # same-repository PR must not run its own tree's shell next to the key.
+      - name: Check Required Secrets
+        if: github.event_name != 'pull_request'
+        env:
+          AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
+          AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
+        run: bash .github/scripts/check-required-secrets.sh AOC_CI_APP_CLIENT_ID AOC_CI_APP_PRIVATE_KEY
 
       # Codacy token is optional, in case of not wanting Codacy reports
       - name: Check Codacy Project Token
