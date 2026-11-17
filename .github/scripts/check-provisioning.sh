@@ -1,20 +1,19 @@
 #!/bin/bash
 # =================================================================================
-# Usage:       ./ensure-repository.sh <owner> <repository> <template> <public|private>
-# Description: Creates the repository from a template, or resumes its provisioning
-#              when it already exists. Refuses to continue when a previous run
-#              already completed Setup there: a half-provisioned workshop is worth
-#              retrying, a finished one is not.
-# Example:     ./ensure-repository.sh Flashky advent-of-code-2026 Flashky/advent-of-code-yyyy public
+# Usage:       ./check-provisioning.sh <owner> <repository>
+# Description: Read-only preflight for provisioning. Prints `true` when the
+#              repository already exists, so the caller resumes; `false` when it
+#              does not, so the caller creates it. Fails when a previous run
+#              already completed Setup: a half-provisioned workshop is worth
+#              retrying, a finished one is not. It never writes anything.
+# Example:     ./check-provisioning.sh Flashky advent-of-code-2026
 # =================================================================================
 
 set -euo pipefail
 
-USAGE="Usage: $0 <owner> <repository> <template> <public|private>"
+USAGE="Usage: $0 <owner> <repository>"
 ORGANIZATION="${1:?$USAGE}"
 REPOSITORY="${2:?$USAGE}"
-TEMPLATE="${3:?$USAGE}"
-VISIBILITY="${4:?$USAGE}"
 
 # Validations
 
@@ -32,19 +31,6 @@ for value in "$ORGANIZATION" "$REPOSITORY"; do
   }
 done
 
-[[ "$TEMPLATE" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || {
-  echo "::error title=Invalid Argument::'$TEMPLATE' is not a valid template repository (owner/name)."
-  exit 1
-}
-
-case "$VISIBILITY" in
-  public | private) ;;
-  *)
-    echo "::error title=Invalid Argument::Visibility must be 'public' or 'private' (got '$VISIBILITY')."
-    exit 1
-    ;;
-esac
-
 FULL_NAME="$ORGANIZATION/$REPOSITORY"
 
 if ERROR=$(gh api "repos/$FULL_NAME" --silent 2>&1); then
@@ -57,10 +43,11 @@ if ERROR=$(gh api "repos/$FULL_NAME" --silent 2>&1); then
     exit 1
   fi
 
-  echo "::warning title=Repository Already Exists::$FULL_NAME already exists; resuming its provisioning."
+  # stderr: stdout is the answer the caller captures.
+  echo "::warning title=Repository Already Exists::$FULL_NAME already exists; resuming its provisioning." >&2
+  echo "true"
 elif grep -q 'HTTP 404' <<< "$ERROR"; then
-  echo "Creating repository $FULL_NAME from template $TEMPLATE..."
-  gh repo create "$REPOSITORY" --template "$TEMPLATE" "--$VISIBILITY"
+  echo "false"
 else
   echo "::error title=Repository Lookup Failed::Could not check $FULL_NAME: $ERROR"
   exit 1

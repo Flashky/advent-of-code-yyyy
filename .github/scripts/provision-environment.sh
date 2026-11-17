@@ -1,9 +1,9 @@
 #!/bin/bash
 # =================================================================================
-# Usage:       ./ensure-environment.sh <owner> <repository>
+# Usage:       ./provision-environment.sh <owner> <repository>
 # Description: Creates or updates the `workshop` environment and its `master`
 #              branch policy. Idempotent: an existing policy is left untouched.
-# Example:     ./ensure-environment.sh Flashky advent-of-code-2026
+# Example:     ./provision-environment.sh Flashky advent-of-code-2026
 # =================================================================================
 
 set -euo pipefail

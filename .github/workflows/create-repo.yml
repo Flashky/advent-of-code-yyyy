@@ -89,10 +89,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Create Data Repository
+      - name: Check Data Repository
+        id: repo
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: bash .github/scripts/ensure-repository.sh "$OWNER" "$REPO_NAME" Flashky/advent-of-code-yyyy-data private
+        run: |
+          set -euo pipefail
+          exists=$(bash .github/scripts/check-provisioning.sh "$OWNER" "$REPO_NAME")
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+
+      - name: Create Data Repository
+        if: steps.repo.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: gh repo create "$REPO_NAME" --template Flashky/advent-of-code-yyyy-data --private
 
       - name: Generate GitHub App Token
         id: app-token
@@ -105,31 +115,36 @@ jobs:
       - name: Provision Workshop Environment
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: bash .github/scripts/ensure-environment.sh "$OWNER" "$REPO_NAME"
+        run: bash .github/scripts/provision-environment.sh "$OWNER" "$REPO_NAME"
 
       - name: Configure Environment Secrets
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
-        run: bash .github/scripts/set-environment-secrets.sh "$OWNER" "$REPO_NAME"
+        run: |
+          gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
 
       - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           AOC_YEAR: ${{ needs.verify.outputs.year }}
-        run: bash .github/scripts/set-repository-secrets.sh "$OWNER" "$REPO_NAME" --variable AOC_YEAR
+        run: gh variable set AOC_YEAR --repo "$OWNER/$REPO_NAME" --body "$AOC_YEAR"
 
       - name: Enable Auto-Merge
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash .github/scripts/enable-auto-merge.sh "$OWNER" "$REPO_NAME"
+        run: gh api "repos/$OWNER/$REPO_NAME" -X PATCH -F allow_auto_merge=true
 
       - name: Allow Actions to Create and Approve PRs
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash .github/scripts/set-workflow-permissions.sh "$OWNER" "$REPO_NAME"
+        run: |
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
 
       - name: Trigger Setup Workflow
         env:
@@ -138,7 +153,7 @@ jobs:
           set -euo pipefail
           echo "Waiting for GitHub to index workflows in $REPO_NAME..."
           sleep 5
-          bash .github/scripts/dispatch-setup.sh "$OWNER" "$REPO_NAME"
+          gh workflow run "Setup" --repo "$OWNER/$REPO_NAME"
 
   # Bootstraps the solutions repository, initializing any needed tokens and basic configurations.
   bootstrap-solutions-repo:
@@ -154,10 +169,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Create Solutions Repository
+      - name: Check Solutions Repository
+        id: repo
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: bash .github/scripts/ensure-repository.sh "$OWNER" "$REPO_NAME" Flashky/advent-of-code-yyyy public
+        run: |
+          set -euo pipefail
+          exists=$(bash .github/scripts/check-provisioning.sh "$OWNER" "$REPO_NAME")
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+
+      - name: Create Solutions Repository
+        if: steps.repo.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: gh repo create "$REPO_NAME" --template Flashky/advent-of-code-yyyy --public
 
       - name: Generate GitHub App Token
         id: app-token
@@ -186,14 +211,16 @@ jobs:
       - name: Provision Workshop Environment
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: bash .github/scripts/ensure-environment.sh "$OWNER" "$REPO_NAME"
+        run: bash .github/scripts/provision-environment.sh "$OWNER" "$REPO_NAME"
 
       - name: Configure Environment Secrets
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
-        run: bash .github/scripts/set-environment-secrets.sh "$OWNER" "$REPO_NAME"
+        run: |
+          gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
+          gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
 
       - name: Configure Secrets and Variables
         env:
@@ -204,24 +231,31 @@ jobs:
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
           AOC_YEAR: ${{ needs.verify.outputs.year }}
         run: |
-          bash .github/scripts/set-repository-secrets.sh "$OWNER" "$REPO_NAME" \
-            --secret AOC_CI_APP_CLIENT_ID \
-            --secret AOC_CI_APP_PRIVATE_KEY \
-            --secret CODACY_PROJECT_TOKEN \
-            --variable AOC_YEAR \
-            --dependabot-secret AOC_CI_APP_CLIENT_ID \
-            --dependabot-secret AOC_CI_APP_PRIVATE_KEY \
-            --dependabot-secret CODACY_PROJECT_TOKEN
+          echo "Setting secrets for Actions..."
+          gh secret set AOC_CI_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID"
+          gh secret set AOC_CI_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
+          gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
+
+          echo "Setting variables for Actions..."
+          gh variable set AOC_YEAR --repo "$OWNER/$REPO_NAME" --body "$AOC_YEAR"
+
+          echo "Setting secrets for Dependabot..."
+          gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID"
+          gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
+          gh secret set CODACY_PROJECT_TOKEN --app dependabot --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
 
       - name: Enable Auto-Merge
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash .github/scripts/enable-auto-merge.sh "$OWNER" "$REPO_NAME"
+        run: gh api "repos/$OWNER/$REPO_NAME" -X PATCH -F allow_auto_merge=true
 
       - name: Allow Actions to Create and Approve PRs
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash .github/scripts/set-workflow-permissions.sh "$OWNER" "$REPO_NAME"
+        run: |
+          gh api --method PUT "repos/$OWNER/$REPO_NAME/actions/permissions/workflow" \
+            -F default_workflow_permissions="write" \
+            -F can_approve_pull_request_reviews=true
 
       - name: Import Branch Protection Ruleset
         env:
@@ -231,7 +265,7 @@ jobs:
       - name: Trigger Setup Workflow
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bash .github/scripts/dispatch-setup.sh "$OWNER" "$REPO_NAME"
+        run: gh workflow run "Setup" --repo "$OWNER/$REPO_NAME"
 
   # Summary job
   summary:
