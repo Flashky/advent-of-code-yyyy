@@ -19,6 +19,9 @@ jobs:
       repo_name_solutions: ${{ steps.set-vars.outputs.repo_name_solutions }}
       repo_name_data: ${{ steps.set-vars.outputs.repo_name_data }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
       - name: Prevent Execution on Template Repository
         run: |
           set -euo pipefail
@@ -31,48 +34,16 @@ jobs:
         id: set-vars
         env:
           YEAR: ${{ vars.AOC_YEAR }}
-        run: |
-          set -euo pipefail
-          CURRENT_YEAR=$(date +%Y)
-          MAX_YEAR=$((CURRENT_YEAR + 1))
-
-          if [[ -z "$YEAR" ]]; then
-            echo "::error title=Missing Year::No year input provided and AOC_YEAR variable is not set."
-            exit 1
-          fi
-          
-          if [[ ! "$YEAR" =~ ^[0-9]{4}$ ]]; then
-            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., $CURRENT_YEAR)."
-            exit 1
-          fi
-
-          # 10# forces base 10 so values like 0999 are not parsed as octal
-          YEAR_NUM=$((10#$YEAR))
-
-          if (( YEAR_NUM < 2015 || YEAR_NUM > MAX_YEAR )); then
-            echo "::error title=Invalid Year::Year must be between 2015 and $MAX_YEAR."
-            exit 1
-          fi
-
-          echo "Year '$YEAR' format is valid."
-          echo "repo_name_solutions=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
-          echo "repo_name_data=advent-of-code-$YEAR-data" >> $GITHUB_OUTPUT
+        # The script's stdout lines are `name=value` pairs; the redirection writes
+        # them to this step's outputs. Errors go to stderr, never into that file.
+        run: bash .github/scripts/provisioning/validate-year.sh "$YEAR" >> "$GITHUB_OUTPUT"
 
       - name: Check Required Secrets
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
           AOC_APP_CLIENT_ID: ${{ secrets.AOC_APP_CLIENT_ID }}
           AOC_APP_PRIVATE_KEY: ${{ secrets.AOC_APP_PRIVATE_KEY }}
-        run: |
-          set -uo pipefail
-          MISSING=0
-          for name in CODACY_PROJECT_TOKEN AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error title=Missing Secret::$name secret is not set."
-              MISSING=1
-            fi
-          done
-          exit "$MISSING"
+        run: bash .github/scripts/check-required-secrets.sh CODACY_PROJECT_TOKEN AOC_APP_CLIENT_ID AOC_APP_PRIVATE_KEY
 
   update:
     needs: verify
@@ -153,27 +124,10 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
           OWNER: ${{ github.repository_owner }}
-          REPO_NAME:  ${{ needs.verify.outputs.repo_name_solutions }}
-        run: |
-          set -euo pipefail
-          
-          RESPONSE=$(curl -s --request GET \
-                        --url "https://app.codacy.com/api/v3/organizations/gh/$OWNER/repositories/$REPO_NAME" \
-                        --header "project-token: $CODACY_PROJECT_TOKEN")
-          
-          GRADE_URL=$(echo "$RESPONSE" | jq -r '.data.badges.grade // empty')
-          COVERAGE_URL=$(echo "$RESPONSE" | jq -r '.data.badges.coverage // empty')
-          
-          if [ -z "$GRADE_URL" ] || [ -z "$COVERAGE_URL" ]; then
-            echo "::warning title=Codacy Badges Missing::Could not fetch badge URLs from Codacy API after multiple retries. Skipping badge injection."
-            echo "skip_badges=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          echo "Badges successfully fetched from Codacy!"
-          echo "skip_badges=false" >> $GITHUB_OUTPUT
-          echo "grade_url=$GRADE_URL" >> $GITHUB_OUTPUT
-          echo "coverage_url=$COVERAGE_URL" >> $GITHUB_OUTPUT
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        # The script's stdout lines are `name=value` pairs; the redirection writes
+        # them to this step's outputs. Warnings go to stderr, never into that file.
+        run: bash .github/scripts/provisioning/fetch-codacy-badges.sh "$OWNER" "$REPO_NAME" >> "$GITHUB_OUTPUT"
 
       # Add Codacy badges
       - name: Add Codacy Badges
@@ -212,9 +166,11 @@ jobs:
               submodule add -b master "https://github.com/${OWNER}/${REPO_NAME}.git" src/test/resources/inputs
           fi
 
-      # Remove not needed workflows
-      - name: Remove not needed workflows
-        run: rm .github/workflows/setup.yml .github/workflows/create-repo.yml .github/workflows/update-repos.yml
+      # Remove template-only workflows and scripts
+      - name: Remove template-only workflows and scripts
+        run: |
+          rm .github/workflows/setup.yml .github/workflows/create-repo.yml .github/workflows/update-repos.yml
+          rm -r .github/scripts/provisioning
 
       # Open Pull Request
       - name: Open Pull Request
