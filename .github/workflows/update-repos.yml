@@ -81,7 +81,9 @@ jobs:
       name: workshop
       deployment: false
     concurrency:
-      group: update-${{ matrix.repo }}
+      # Shared with create-repo: provisioning the same repository from two
+      # workflows at once can duplicate the branch policy or the ruleset.
+      group: provision-${{ matrix.repo }}
       cancel-in-progress: false
     strategy:
       fail-fast: false

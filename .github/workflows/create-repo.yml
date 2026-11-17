@@ -82,6 +82,11 @@ jobs:
     environment:
       name: workshop
       deployment: false
+    # Same group as update-repos for this repository: two runs provisioning the
+    # same repository (environment, branch policy, ruleset) must not overlap.
+    concurrency:
+      group: provision-${{ needs.verify.outputs.repo_name_data }}
+      cancel-in-progress: false
     env:
       REPO_NAME: ${{ needs.verify.outputs.repo_name_data }}
       OWNER: ${{ github.repository_owner }}
@@ -163,6 +168,11 @@ jobs:
     environment:
       name: workshop
       deployment: false
+    # Shared with update-repos, so the two workflows never provision the same
+    # repository at once.
+    concurrency:
+      group: provision-${{ needs.verify.outputs.repo_name_solutions }}
+      cancel-in-progress: false
     env:
       REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
       OWNER: ${{ github.repository_owner }}
