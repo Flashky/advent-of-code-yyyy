@@ -34,32 +34,7 @@ jobs:
         id: set-vars
         env:
           YEAR: ${{ vars.AOC_YEAR }}
-        run: |
-          set -euo pipefail
-          CURRENT_YEAR=$(date +%Y)
-          MAX_YEAR=$((CURRENT_YEAR + 1))
-
-          if [[ -z "$YEAR" ]]; then
-            echo "::error title=Missing Year::No year input provided and AOC_YEAR variable is not set."
-            exit 1
-          fi
-          
-          if [[ ! "$YEAR" =~ ^[0-9]{4}$ ]]; then
-            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., $CURRENT_YEAR)."
-            exit 1
-          fi
-
-          # 10# forces base 10 so values like 0999 are not parsed as octal
-          YEAR_NUM=$((10#$YEAR))
-
-          if (( YEAR_NUM < 2015 || YEAR_NUM > MAX_YEAR )); then
-            echo "::error title=Invalid Year::Year must be between 2015 and $MAX_YEAR."
-            exit 1
-          fi
-
-          echo "Year '$YEAR' format is valid."
-          echo "repo_name_solutions=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
-          echo "repo_name_data=advent-of-code-$YEAR-data" >> $GITHUB_OUTPUT
+        run: bash .github/scripts/provisioning/validate-year.sh "$YEAR" >> "$GITHUB_OUTPUT"
 
       - name: Check Required Secrets
         env:
@@ -147,27 +122,8 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
           OWNER: ${{ github.repository_owner }}
-          REPO_NAME:  ${{ needs.verify.outputs.repo_name_solutions }}
-        run: |
-          set -euo pipefail
-          
-          RESPONSE=$(curl -s --request GET \
-                        --url "https://app.codacy.com/api/v3/organizations/gh/$OWNER/repositories/$REPO_NAME" \
-                        --header "project-token: $CODACY_PROJECT_TOKEN")
-          
-          GRADE_URL=$(echo "$RESPONSE" | jq -r '.data.badges.grade // empty')
-          COVERAGE_URL=$(echo "$RESPONSE" | jq -r '.data.badges.coverage // empty')
-          
-          if [ -z "$GRADE_URL" ] || [ -z "$COVERAGE_URL" ]; then
-            echo "::warning title=Codacy Badges Missing::Could not fetch badge URLs from Codacy API after multiple retries. Skipping badge injection."
-            echo "skip_badges=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          echo "Badges successfully fetched from Codacy!"
-          echo "skip_badges=false" >> $GITHUB_OUTPUT
-          echo "grade_url=$GRADE_URL" >> $GITHUB_OUTPUT
-          echo "coverage_url=$COVERAGE_URL" >> $GITHUB_OUTPUT
+          REPO_NAME: ${{ needs.verify.outputs.repo_name_solutions }}
+        run: bash .github/scripts/provisioning/fetch-codacy-badges.sh "$OWNER" "$REPO_NAME" >> "$GITHUB_OUTPUT"
 
       # Add Codacy badges
       - name: Add Codacy Badges

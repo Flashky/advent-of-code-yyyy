@@ -34,28 +34,7 @@ jobs:
         id: set-vars
         env:
           YEAR: ${{ inputs.aoc_year }}
-        run: |
-          set -euo pipefail
-          CURRENT_YEAR=$(date +%Y)
-          MAX_YEAR=$((CURRENT_YEAR + 1))
-          
-          if [[ ! "$YEAR" =~ ^[0-9]{4}$ ]]; then
-            echo "::error title=Invalid Year::Please provide a valid 4-digit year (e.g., $CURRENT_YEAR)."
-            exit 1
-          fi
-          
-          # 10# forces base 10 so values like 0999 are not parsed as octal
-          YEAR_NUM=$((10#$YEAR))
-
-          if (( YEAR_NUM < 2015 || YEAR_NUM > MAX_YEAR )); then
-            echo "::error title=Invalid Year::Year must be between 2015 and $MAX_YEAR."
-            exit 1
-          fi
-          
-          echo "Year '$YEAR' format is valid."
-          echo "year=$YEAR" >> $GITHUB_OUTPUT
-          echo "repo_name_solutions=advent-of-code-$YEAR" >> $GITHUB_OUTPUT
-          echo "repo_name_data=advent-of-code-$YEAR-data" >> $GITHUB_OUTPUT
+        run: bash .github/scripts/provisioning/validate-year.sh "$YEAR" >> "$GITHUB_OUTPUT"
 
       - name: Check Required Secrets
         env:
