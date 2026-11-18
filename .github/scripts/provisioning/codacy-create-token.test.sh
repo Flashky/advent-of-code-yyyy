@@ -81,7 +81,7 @@ run_case() {
   fi
 }
 
-run_case "respuesta real de Codacy" 200 '{"data":{"id":3753476,"token":"REDACTED","name":"pt-85976ce96e00","expiresAt":"2027-10-30T17:50:35.477430287Z","createdAt":"2026-10-30T17:50:35.479527937Z"}}' 0 "REDACTED" exact
+run_case "respuesta real de Codacy" 201 '{"data":{"id":3753476,"token":"REDACTED","name":"pt-85976ce96e00","expiresAt":"2027-10-30T17:50:35.477430287Z","createdAt":"2026-10-30T17:50:35.479527937Z"}}' 0 "REDACTED" exact
 run_case "token válido" 200 '{"data":{"token":"abc123"}}' 0 "abc123" exact
 run_case "token tras otras claves" 200 '{"data":{"expiresAt":"2027-01-01","token":"xyz789"}}' 0 "xyz789" exact
 run_case "token en la raíz" 200 '{"token":"abc123"}' 1 "without a usable token"
