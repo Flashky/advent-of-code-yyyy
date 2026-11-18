@@ -81,14 +81,16 @@ run_case() {
   fi
 }
 
-run_case "token válido" 200 '{"token":"abc123"}' 0 "abc123" exact
-run_case "token tras otras claves" 200 '{"expiresAt":"2027-01-01","token":"xyz789"}' 0 "xyz789" exact
-run_case "token ausente" 200 '{"message":"ok"}' 1 "without a usable token"
-run_case "token nulo" 200 '{"token":null}' 1 "without a usable token"
-run_case "JSON malformado" 200 '{"token":"abc123"' 1 "without a usable token"
-run_case "dos documentos JSON" 200 '{"token":"a"} {"token":"b"}' 1 "without a usable token"
-run_case "token con salto de línea" 200 '{"token":"abc\nname=injected"}' 1 "without a usable token" substring "name=injected"
-run_case "token con tabulador" 200 '{"token":"abc\tdef"}' 1 "without a usable token"
+run_case "respuesta real de Codacy" 200 '{"data":{"id":3753476,"token":"REDACTED","name":"pt-85976ce96e00","expiresAt":"2027-10-30T17:50:35.477430287Z","createdAt":"2026-10-30T17:50:35.479527937Z"}}' 0 "REDACTED" exact
+run_case "token válido" 200 '{"data":{"token":"abc123"}}' 0 "abc123" exact
+run_case "token tras otras claves" 200 '{"data":{"expiresAt":"2027-01-01","token":"xyz789"}}' 0 "xyz789" exact
+run_case "token en la raíz" 200 '{"token":"abc123"}' 1 "without a usable token"
+run_case "token ausente" 200 '{"data":{"name":"pt-85976ce96e00"}}' 1 "without a usable token"
+run_case "token nulo" 200 '{"data":{"token":null}}' 1 "without a usable token"
+run_case "JSON malformado" 200 '{"data":{"token":"abc123"' 1 "without a usable token"
+run_case "dos documentos JSON" 200 '{"data":{"token":"a"}} {"data":{"token":"b"}}' 1 "without a usable token"
+run_case "token con salto de línea" 200 '{"data":{"token":"abc\nname=injected"}}' 1 "without a usable token" substring "name=injected"
+run_case "token con tabulador" 200 '{"data":{"token":"abc\tdef"}}' 1 "without a usable token"
 run_case "error de la API" 404 '{"error":"Not Found","message":"repository not found"}' 1 "404 Not Found: repository not found"
 run_case "error con comando de workflow" 404 '{"error":"Not Found","message":"a\n::warning::b"}' 1 "404 Not Found: a ::warning::b" substring "::warning::"
 run_case "error con objeto en error" 500 '{"error":{"code":1}}' 1 "500 Error:"

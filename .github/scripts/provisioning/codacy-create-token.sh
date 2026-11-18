@@ -53,7 +53,11 @@ if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
   # line would become an output nobody asked for. `jq -e` fails on malformed JSON
   # and on a missing field, and the token has to be a single run of printable
   # ASCII, so neither a newline nor a tab can get through.
-  if TOKEN=$(jq -ser 'if length == 1 then .[0].token | select(type == "string" and test("^[!-~]+$")) else empty end' "$RESPONSE_FILE" 2>/dev/null); then
+  # Codacy wraps the created token in a `data` object; there is no flat `token`
+  # at the top level. The slurp keeps the single-document check below: it also
+  # rejects a response carrying two documents, which would otherwise inject an
+  # extra line into $GITHUB_OUTPUT.
+  if TOKEN=$(jq -ser 'if length == 1 then .[0].data.token | select(type == "string" and test("^[!-~]+$")) else empty end' "$RESPONSE_FILE" 2>/dev/null); then
     echo "$TOKEN"
     exit 0
   fi
