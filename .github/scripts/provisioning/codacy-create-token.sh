@@ -17,13 +17,13 @@ REPOSITORY="${2:?Usage: $0 <owner> <repository-name>}"
 : "${CODACY_API_TOKEN:?CODACY_API_TOKEN is not set}"
 
 command -v jq > /dev/null 2>&1 || {
-  echo "::error title=Missing Tool::jq is required to parse the Codacy API response."
+  echo "::error title=Missing Tool::jq is required to parse the Codacy API response." >&2
   exit 1
 }
 
 for value in "$ORGANIZATION" "$REPOSITORY"; do
   [[ "$value" =~ ^[A-Za-z0-9_.-]+$ ]] || {
-    echo "::error title=Invalid Argument::'$value' is not a valid GitHub owner/repository name."
+    echo "::error title=Invalid Argument::'$value' is not a valid GitHub owner/repository name." >&2
     exit 1
   }
 done

@@ -17,7 +17,7 @@ REPOSITORY="${2:?Usage: $0 <owner> <repository-name>}"
 
 for value in "$ORGANIZATION" "$REPOSITORY"; do
   [[ "$value" =~ ^[A-Za-z0-9_.-]+$ ]] || {
-    echo "::error title=Invalid Argument::'$value' is not a valid GitHub owner/repository name."
+    echo "::error title=Invalid Argument::'$value' is not a valid GitHub owner/repository name." >&2
     exit 1
   }
 done
