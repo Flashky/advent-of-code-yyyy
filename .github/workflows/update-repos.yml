@@ -114,7 +114,10 @@ jobs:
           path: template
           ref: ${{ github.event.repository.default_branch }}
 
-      - name: Resolve Codacy Project Token
+      # Reuse a live token, replace an expired one, or create it from scratch.
+      # Unlike the old "secret already set" guard, this always runs so retries
+      # reconcile orphan tokens (#331); its outputs feed rollback/reconcile.
+      - name: Get or create Codacy token
         id: codacy-token
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
@@ -157,7 +160,7 @@ jobs:
           gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID"
           gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
 
-      - name: Revoke Codacy token if provisioning failed before storing the secret
+      - name: Revoke Codacy token on failure
         if: (failure() || cancelled()) && steps.codacy-token.outputs.id != '' && steps.store-codacy-token.outputs.stored != 'true'
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
