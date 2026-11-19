@@ -45,11 +45,13 @@ command -v jq > /dev/null 2>&1 || {
   exit 1
 }
 
+# Call the single-endpoint scripts through bash: the repository keeps them
+# non-executable, so invoking them by name would fail with permission denied.
+# CODACY_SCRIPTS_DIR exists so the tests can point these calls at stubs.
 SCRIPT_DIR="${CODACY_SCRIPTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-export PATH="$SCRIPT_DIR:$PATH"
 
 for helper in codacy-list-tokens.sh codacy-revoke-token.sh; do
-  command -v "$helper" > /dev/null 2>&1 || {
+  [[ -f "$SCRIPT_DIR/$helper" ]] || {
     echo "::error title=Missing Tool::$helper is required." >&2
     exit 1
   }
@@ -58,7 +60,7 @@ done
 TOKENS_FILE=$(mktemp)
 trap 'rm -f "$TOKENS_FILE"' EXIT
 
-codacy-list-tokens.sh "$ORGANIZATION" "$REPOSITORY" > "$TOKENS_FILE"
+bash "$SCRIPT_DIR/codacy-list-tokens.sh" "$ORGANIZATION" "$REPOSITORY" > "$TOKENS_FILE"
 
 # Fail safe: an empty or stale keep-token must never turn into a mass revocation.
 if ! jq -se --arg token "$KEEP_TOKEN" 'any(.[]; .token == $token)' "$TOKENS_FILE" > /dev/null; then
@@ -81,6 +83,6 @@ while IFS= read -r line; do
     echo "Would revoke $TOKEN_NAME (id $TOKEN_ID) from $ORGANIZATION/$REPOSITORY." >&2
   else
     echo "Revoking $TOKEN_NAME (id $TOKEN_ID) from $ORGANIZATION/$REPOSITORY." >&2
-    codacy-revoke-token.sh "$ORGANIZATION" "$REPOSITORY" "$TOKEN_ID"
+    bash "$SCRIPT_DIR/codacy-revoke-token.sh" "$ORGANIZATION" "$REPOSITORY" "$TOKEN_ID"
   fi
 done < "$TOKENS_FILE"

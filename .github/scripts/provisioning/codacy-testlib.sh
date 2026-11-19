@@ -55,10 +55,9 @@ printf 'revoke %s\n' "$*" >> "$CODACY_CALLS"
 exit "${FAKE_REVOKE_STATUS:-0}"
 STUB
 
-chmod +x "$CODACY_TEST_DIR/bin/curl" \
-  "$CODACY_TEST_DIR/stubs/codacy-list-tokens.sh" \
-  "$CODACY_TEST_DIR/stubs/codacy-create-token.sh" \
-  "$CODACY_TEST_DIR/stubs/codacy-revoke-token.sh"
+# Only curl needs the executable bit: the endpoint helpers are invoked through
+# bash, so leaving the stubs non-executable catches a regression to bare names.
+chmod +x "$CODACY_TEST_DIR/bin/curl"
 
 # expect_call <name> <fragment>: at least one recorded call contains the text.
 expect_call() {

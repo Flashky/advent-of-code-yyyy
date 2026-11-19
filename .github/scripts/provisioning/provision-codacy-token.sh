@@ -31,13 +31,13 @@ for value in "$ORGANIZATION" "$REPOSITORY"; do
   }
 done
 
-# Call the single-endpoint scripts by name. CODACY_SCRIPTS_DIR exists so the
-# tests can point these calls at stubs without touching the real scripts.
+# Call the single-endpoint scripts through bash: the repository keeps them
+# non-executable, so invoking them by name would fail with permission denied.
+# CODACY_SCRIPTS_DIR exists so the tests can point these calls at stubs.
 SCRIPT_DIR="${CODACY_SCRIPTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-export PATH="$SCRIPT_DIR:$PATH"
 
 for helper in codacy-list-tokens.sh codacy-revoke-token.sh codacy-create-token.sh; do
-  command -v "$helper" > /dev/null 2>&1 || {
+  [[ -f "$SCRIPT_DIR/$helper" ]] || {
     echo "::error title=Missing Tool::$helper is required." >&2
     exit 1
   }
@@ -50,7 +50,7 @@ fi
 TOKENS_FILE=$(mktemp)
 trap 'rm -f "$TOKENS_FILE"' EXIT
 
-codacy-list-tokens.sh "$ORGANIZATION" "$REPOSITORY" > "$TOKENS_FILE"
+bash "$SCRIPT_DIR/codacy-list-tokens.sh" "$ORGANIZATION" "$REPOSITORY" > "$TOKENS_FILE"
 
 # Codacy token names allow only letters, digits and dashes. Repositories may
 # legitimately use dots or underscores, so normalise those and keep the whole
@@ -102,9 +102,9 @@ if [[ -n "$MATCH" ]]; then
     exit 1
   fi
   echo "Codacy token $TOKEN_NAME has expired; revoking id $TOKEN_ID before creating a replacement." >&2
-  codacy-revoke-token.sh "$ORGANIZATION" "$REPOSITORY" "$TOKEN_ID"
+  bash "$SCRIPT_DIR/codacy-revoke-token.sh" "$ORGANIZATION" "$REPOSITORY" "$TOKEN_ID"
 fi
 
 # 364 days, not 365, to stay inside Codacy's "no more than one year" rule.
 EXPIRES_AT=$(date -u -d '+364 days' +%Y-%m-%dT%H:%M:%SZ)
-codacy-create-token.sh "$ORGANIZATION" "$REPOSITORY" "$TOKEN_NAME" "$EXPIRES_AT"
+bash "$SCRIPT_DIR/codacy-create-token.sh" "$ORGANIZATION" "$REPOSITORY" "$TOKEN_NAME" "$EXPIRES_AT"
