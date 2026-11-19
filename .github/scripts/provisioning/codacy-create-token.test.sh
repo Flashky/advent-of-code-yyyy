@@ -2,7 +2,7 @@
 # =================================================================================
 # Usage:       ./codacy-create-token.test.sh
 # Description: Regression tests for codacy-create-token.sh. Replaces curl with a
-#              stub that returns a canned response, so nothing leaves the machine.
+#              stub, so nothing leaves the machine.
 # Example:     ./codacy-create-token.test.sh
 # =================================================================================
 
@@ -11,98 +11,100 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 TOKEN_SCRIPT="$SCRIPT_DIR/codacy-create-token.sh"
 BASH_BIN=$(command -v bash)
-WORK_DIR=$(mktemp -d)
-trap 'rm -rf "$WORK_DIR"' EXIT
 
-FAILURES=0
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../testlib.sh"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/codacy-testlib.sh"
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/nojq"
-cat > "$WORK_DIR/bin/curl" <<'STUB'
-#!/bin/bash
-# Stand-in for curl: honour -o <file>, ignore everything else, then print the
-# canned body and the canned HTTP status.
-out=""
-while (($#)); do
-  case "$1" in
-    -o) out="$2"; shift 2 ;;
-    *) shift ;;
-  esac
-done
-printf '%s' "${FAKE_CURL_BODY:-}" > "$out"
-printf '%s' "${FAKE_CURL_STATUS:-200}"
-STUB
-chmod +x "$WORK_DIR/bin/curl"
+export CODACY_API_TOKEN=stub
+export PATH="$CODACY_TEST_DIR/bin:$PATH"
+export FAKE_CURL_STATUS=200
+export FAKE_CURL_BODY='{}'
 
-# run_case <name> <status> <body> <expected-exit> <expected> [exact] [forbidden] [run_path] [owner]
-#   exact:     the whole output must be <expected>, so echoing the response back
-#              instead of extracting the token does not pass.
-#   forbidden: no line of the output may start with this prefix, which is how a
-#              workflow command smuggled in the response would surface.
-#   run_path:  PATH for the child process; point it at an empty dir to hide jq.
-#   owner:     first argument; override to exercise the argument validation.
+EXPIRES=$(date -u -d '+364 days' +%Y-%m-%dT%H:%M:%SZ)
+
+# run_case <name> <status> <body> <expected-exit> <expected> [exact] [forbidden] [run_path] [owner] [name] [expires]
 run_case() {
   local name="$1" status="$2" body="$3" expected_exit="$4" expected="$5"
   local mode="${6:-substring}" forbidden="${7:-}"
-  local run_path="${8:-$WORK_DIR/bin:$PATH}" owner="${9:-Flashky}"
-  local output rc
-  local stdout_file="$WORK_DIR/stdout" stderr_file="$WORK_DIR/stderr"
+  local run_path="${8:-$PATH}" owner="${9:-Flashky}"
+  local token_name="${10:-aoc-advent-of-code-2026}" expires="${11:-$EXPIRES}"
+  local output
+
   set +e
   PATH="$run_path" \
-    CODACY_API_TOKEN=stub \
     FAKE_CURL_STATUS="$status" \
     FAKE_CURL_BODY="$body" \
-    "$BASH_BIN" "$TOKEN_SCRIPT" "$owner" advent-of-code-2026 > "$stdout_file" 2> "$stderr_file"
-  rc=$?
+    "$BASH_BIN" "$TOKEN_SCRIPT" "$owner" advent-of-code-2026 "$token_name" "$expires" \
+    > "$CODACY_TEST_DIR/stdout" 2> "$CODACY_TEST_DIR/stderr"
+  local rc=$?
   set -e
-  # The callers capture stdout in a variable: a diagnostic there is lost as soon
-  # as `set -e` ends the step, which is exactly what hid the Codacy error.
-  output=$(cat "$stdout_file" "$stderr_file")
+  output="$(cat "$CODACY_TEST_DIR/stdout") $(cat "$CODACY_TEST_DIR/stderr")"
 
   if [ "$rc" -ne "$expected_exit" ]; then
-    echo "FAIL $name: exit $rc (esperado $expected_exit) -> $output"
-    FAILURES=$((FAILURES + 1))
-  elif [ "$expected_exit" -ne 0 ] && [ -s "$stdout_file" ]; then
-    echo "FAIL $name: el error fue a stdout, donde el caller lo captura y pierde -> $(cat "$stdout_file")"
-    FAILURES=$((FAILURES + 1))
-  elif [ "$expected_exit" -eq 0 ] && [ -s "$stderr_file" ]; then
-    echo "FAIL $name: el éxito escribió en stderr -> $(cat "$stderr_file")"
-    FAILURES=$((FAILURES + 1))
-  elif [ "$mode" = "exact" ] && [ "$output" != "$expected" ]; then
-    echo "FAIL $name: salida '$output' (esperado exactamente '$expected')"
-    FAILURES=$((FAILURES + 1))
+    fail "$name" "exit $rc (esperado $expected_exit) -> $output"
+  elif [ "$expected_exit" -ne 0 ] && [ -s "$CODACY_TEST_DIR/stdout" ]; then
+    fail "$name" "el error fue a stdout, donde el caller lo captura y pierde -> $(cat "$CODACY_TEST_DIR/stdout")"
+  elif [ "$expected_exit" -eq 0 ] && [ -s "$CODACY_TEST_DIR/stderr" ]; then
+    fail "$name" "el éxito escribió en stderr -> $(cat "$CODACY_TEST_DIR/stderr")"
+  elif [ "$mode" = "exact" ] && [ "$(cat "$CODACY_TEST_DIR/stdout")" != "$expected" ]; then
+    fail "$name" "stdout '$(cat "$CODACY_TEST_DIR/stdout")' (esperado exactamente '$expected')"
   elif [ "$mode" != "exact" ] && [[ "$output" != *"$expected"* ]]; then
-    echo "FAIL $name: no contiene '$expected' -> $output"
-    FAILURES=$((FAILURES + 1))
-  elif [ -n "$forbidden" ] && grep -q "^${forbidden}" <<< "$output"; then
-    echo "FAIL $name: una línea empieza por '$forbidden' -> $output"
-    FAILURES=$((FAILURES + 1))
+    fail "$name" "no contiene '$expected' -> $output"
+  elif [ -n "$forbidden" ] && grep -q "^${forbidden}" "$CODACY_TEST_DIR/stderr"; then
+    fail "$name" "la stderr empieza una línea con '$forbidden' -> $(cat "$CODACY_TEST_DIR/stderr")"
   else
-    echo "ok   $name"
+    pass "$name"
   fi
 }
 
-run_case "respuesta real de Codacy" 201 '{"data":{"id":3753476,"token":"REDACTED","name":"pt-85976ce96e00","expiresAt":"2027-10-30T17:50:35.477430287Z","createdAt":"2026-10-30T17:50:35.479527937Z"}}' 0 "REDACTED" exact
-run_case "token válido" 200 '{"data":{"token":"abc123"}}' 0 "abc123" exact
-run_case "token tras otras claves" 200 '{"data":{"expiresAt":"2027-01-01","token":"xyz789"}}' 0 "xyz789" exact
+run_case "respuesta real de Codacy" 201 '{"data":{"id":3753476,"token":"REDACTED","name":"aoc-advent-of-code-2026","expiresAt":"2027-10-30T17:50:35.477430287Z","createdAt":"2026-10-30T17:50:35.479527937Z"}}' 0 "REDACTED" exact
+run_case "token válido" 200 '{"data":{"token":"abc123","id":1}}' 0 "abc123" exact
+run_case "token tras otras claves" 200 '{"data":{"expiresAt":"2027-01-01","token":"xyz789","id":2}}' 0 "xyz789" exact
 run_case "token en la raíz" 200 '{"token":"abc123"}' 1 "without a usable token"
-run_case "token ausente" 200 '{"data":{"name":"pt-85976ce96e00"}}' 1 "without a usable token"
+run_case "token ausente" 200 '{"data":{"id":3,"name":"pt-85976ce96e00"}}' 1 "without a usable token"
+run_case "id ausente" 200 '{"data":{"token":"abc123"}}' 1 "numeric data.id"
+run_case "id no numérico" 200 '{"data":{"token":"abc123","id":"7"}}' 1 "numeric data.id"
 run_case "token nulo" 200 '{"data":{"token":null}}' 1 "without a usable token"
 run_case "JSON malformado" 200 '{"data":{"token":"abc123"' 1 "without a usable token"
 run_case "dos documentos JSON" 200 '{"data":{"token":"a"}} {"data":{"token":"b"}}' 1 "without a usable token"
-run_case "token con salto de línea" 200 '{"data":{"token":"abc\nname=injected"}}' 1 "without a usable token" substring "name=injected"
+run_case "token con salto de línea" 200 '{"data":{"token":"abc\nname=injected"}}' 1 "without a usable token"
 run_case "token con tabulador" 200 '{"data":{"token":"abc\tdef"}}' 1 "without a usable token"
 run_case "error de la API" 404 '{"error":"Not Found","message":"repository not found"}' 1 "404 Not Found: repository not found"
-run_case "error con comando de workflow" 404 '{"error":"Not Found","message":"a\n::warning::b"}' 1 "404 Not Found: a ::warning::b" substring "::warning::"
+run_case "error con comando de workflow" 404 '{"error":"Not Found","message":"a\n::warning::b"}' 1 "404 Not Found: a ::warning::b"
 run_case "error con objeto en error" 500 '{"error":{"code":1}}' 1 "500 Error:"
 run_case "respuesta vacía" 500 '' 1 "Empty response from server."
-run_case "jq ausente" 200 '{}' 1 "jq is required" substring "" "$WORK_DIR/nojq"
-run_case "argumento inválido" 200 '{}' 1 "is not a valid GitHub owner/repository name" substring "" "" "bad owner!"
+run_case "jq ausente" 200 '{}' 1 "jq is required" substring "" "$CODACY_TEST_DIR/nojq"
+run_case "argumento inválido" 200 '{}' 1 "is not a valid GitHub owner/repository name" substring "" "$PATH" "bad owner!"
+run_case "nombre con espacio" 200 '{}' 1 "not a valid Codacy token name" substring "" "$PATH" Flashky "bad name!"
+run_case "nombre demasiado largo" 200 '{}' 1 "not a valid Codacy token name" substring "" "$PATH" Flashky "$(printf 'a%.0s' {1..101})"
+run_case "expiración pasada" 200 '{}' 1 "must be in the future" substring "" "$PATH" Flashky aoc-test "2020-01-01T00:00:00Z"
+run_case "expiración demasiado lejana" 200 '{}' 1 "must be in the future" substring "" "$PATH" Flashky aoc-test "$(date -u -d '+366 days' +%Y-%m-%dT%H:%M:%SZ)"
+run_case "expiración mal formada" 200 '{}' 1 "not a valid Codacy expiry timestamp" substring "" "$PATH" Flashky aoc-test "not-a-date"
 
-if [ "$FAILURES" -ne 0 ]; then
-  echo
-  echo "$FAILURES FALLOS"
-  exit 1
+: > "$CODACY_CALLS"
+: > "$CODACY_BODIES"
+export FAKE_CURL_STATUS=201
+export FAKE_CURL_BODY='{"data":{"token":"new-token","id":7}}'
+run_script "$TOKEN_SCRIPT" Flashky advent-of-code-2026 aoc-advent-of-code-2026 "$EXPIRES"
+expect_status "POST con body" 0
+expect_stdout_is "POST con body" "new-token"
+expect_call "método de la petición" "METHOD=POST"
+expect_call "endpoint de creación" "/repositories/advent-of-code-2026/tokens"
+expect_json_field "nombre en el body" "name" "aoc-advent-of-code-2026"
+expect_json_field "caducidad en el body" "expiresAt" "$EXPIRES"
+
+STATE_FILE="$CODACY_TEST_DIR/state"
+: > "$STATE_FILE"
+CODACY_TOKEN_STATE_FILE="$STATE_FILE" \
+  run_script "$TOKEN_SCRIPT" Flashky advent-of-code-2026 aoc-advent-of-code-2026 "$EXPIRES"
+expect_status "canal de estado" 0
+expect_stdout_is "canal de estado" "new-token"
+if grep -qx 'id=7' "$STATE_FILE"; then
+  pass "canal de estado: id"
+else
+  fail "canal de estado" "id no escrito -> $(cat "$STATE_FILE")"
 fi
 
-echo
-echo "TODO OK"
+finish
