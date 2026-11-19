@@ -158,12 +158,13 @@ jobs:
           gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
 
       - name: Revoke Codacy token if provisioning failed before storing the secret
-        if: failure() && steps.codacy-token.outputs.id != '' && steps.store-codacy-token.outputs.stored != 'true'
+        if: (failure() || cancelled()) && steps.codacy-token.outputs.id != '' && steps.store-codacy-token.outputs.stored != 'true'
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: bash template/.github/scripts/provisioning/codacy-revoke-token.sh "$OWNER" "$REPO_NAME" "${{ steps.codacy-token.outputs.id }}"
 
       - name: Reconcile Codacy tokens
+        if: always() && steps.store-codacy-token.outputs.stored == 'true'
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
           CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}

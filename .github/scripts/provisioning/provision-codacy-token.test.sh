@@ -20,10 +20,16 @@ source "$SCRIPT_DIR/codacy-testlib.sh"
 export CODACY_API_TOKEN=stub
 export CODACY_SCRIPTS_DIR="$CODACY_TEST_DIR/stubs"
 
-LIVE='{"id":1,"name":"aoc-advent-of-code-2026","token":"tok-live","expiresAt":"2030-01-01T00:00:00Z","createdAt":"2026-01-01T00:00:00Z"}'
-EXPIRED='{"id":2,"name":"aoc-advent-of-code-2026","token":"tok-expired","expiresAt":"2020-01-01T00:00:00Z","createdAt":"2026-01-01T00:00:00Z"}'
-OLD_NAMED='{"id":4,"name":"aoc-advent-of-code-2026","token":"tok-old","expiresAt":"2030-01-01T00:00:00Z","createdAt":"2026-01-01T00:00:00Z"}'
-NEW_NAMED='{"id":5,"name":"aoc-advent-of-code-2026","token":"tok-newest","expiresAt":"2030-01-01T00:00:00Z","createdAt":"2026-03-01T00:00:00Z"}'
+# Relative fixtures: fixed dates eventually turn a "live" token into an expired
+# one (or move an out-of-range expiry inside the one-year window).
+LIVE_EXPIRY=$(date -u -d '+30 days' +%Y-%m-%dT%H:%M:%SZ)
+EXPIRED_EXPIRY=$(date -u -d '-30 days' +%Y-%m-%dT%H:%M:%SZ)
+OLD_CREATED=$(date -u -d '-60 days' +%Y-%m-%dT%H:%M:%SZ)
+NEW_CREATED=$(date -u -d '-30 days' +%Y-%m-%dT%H:%M:%SZ)
+LIVE="{\"id\":1,\"name\":\"aoc-advent-of-code-2026\",\"token\":\"tok-live\",\"expiresAt\":\"$LIVE_EXPIRY\",\"createdAt\":\"$OLD_CREATED\"}"
+EXPIRED="{\"id\":2,\"name\":\"aoc-advent-of-code-2026\",\"token\":\"tok-expired\",\"expiresAt\":\"$EXPIRED_EXPIRY\",\"createdAt\":\"$OLD_CREATED\"}"
+OLD_NAMED="{\"id\":4,\"name\":\"aoc-advent-of-code-2026\",\"token\":\"tok-old\",\"expiresAt\":\"$LIVE_EXPIRY\",\"createdAt\":\"$OLD_CREATED\"}"
+NEW_NAMED="{\"id\":5,\"name\":\"aoc-advent-of-code-2026\",\"token\":\"tok-newest\",\"expiresAt\":\"$LIVE_EXPIRY\",\"createdAt\":\"$NEW_CREATED\"}"
 
 # run_provision <name> <list-ndjson>
 run_provision() {
@@ -73,11 +79,29 @@ expect_stdout_is "varios con el mismo nombre" "tok-newest"
 expect_call_count "varios con el mismo nombre no crea" "create " 0
 
 run_provision "expiración ausente" '{"id":6,"name":"aoc-advent-of-code-2026","token":"tok-no-expiry","createdAt":"2026-01-01T00:00:00Z"}'
-expect_status "expiración ausente" 0
-expect_stdout_is "expiración ausente" "new-token"
-expect_call_count "expiración ausente revoca" "revoke " 1
-expect_call_count "expiración ausente crea" "create " 1
-expect_order "expiración ausente" "revoke " "create "
+expect_status "expiración ausente" 1
+expect_stdout_is "expiración ausente" ""
+expect_call_count "expiración ausente no revoca" "revoke " 0
+expect_call_count "expiración ausente no crea" "create " 0
+expect_stderr "expiración ausente" "refusing to revoke"
+
+run_provision "token sin valor vigente" "{\"id\":7,\"name\":\"aoc-advent-of-code-2026\",\"expiresAt\":\"$LIVE_EXPIRY\",\"createdAt\":\"$OLD_CREATED\"}"
+expect_status "token sin valor vigente" 1
+expect_call_count "token sin valor vigente no revoca" "revoke " 0
+expect_call_count "token sin valor vigente no crea" "create " 0
+expect_stderr "token sin valor vigente" "refusing to revoke"
+
+run_provision "expiración mal formada" '{"id":8,"name":"aoc-advent-of-code-2026","token":"tok-bad-expiry","expiresAt":"not-a-date"}'
+expect_status "expiración mal formada" 1
+expect_call_count "expiración mal formada no revoca" "revoke " 0
+expect_call_count "expiración mal formada no crea" "create " 0
+expect_stderr "expiración mal formada" "refusing to revoke"
+
+: > "$CODACY_CALLS"
+FAKE_LIST="" FAKE_CREATE_TOKEN=new-token \
+  run_script "$TOKEN_SCRIPT" Flashky advent.of_code-2026
+expect_status "nombre saneado" 0
+expect_call "nombre saneado" "create Flashky advent.of_code-2026 aoc-advent-of-code-2026 "
 
 : > "$CODACY_CALLS"
 CODACY_SCRIPTS_DIR="$CODACY_TEST_DIR/nojq" FAKE_LIST="$LIVE" \

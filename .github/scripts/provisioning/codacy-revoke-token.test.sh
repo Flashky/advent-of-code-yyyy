@@ -32,6 +32,8 @@ run_case() {
     fail "$name" "exit $rc (esperado $expected_exit) -> $output"
   elif [ "$expected_exit" -ne 0 ] && [ -n "$RUN_STDOUT" ]; then
     fail "$name" "el error fue a stdout -> $RUN_STDOUT"
+  elif [ "$expected_exit" -eq 0 ] && [[ -n "$RUN_STDOUT" || -n "$RUN_STDERR" ]]; then
+    fail "$name" "un éxito no debe escribir nada -> stdout='$RUN_STDOUT' stderr='$RUN_STDERR'"
   elif [[ "$output" != *"$expected"* ]]; then
     fail "$name" "no contiene '$expected' -> $output"
   else

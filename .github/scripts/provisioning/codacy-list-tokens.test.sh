@@ -57,8 +57,10 @@ EXPECTED_TWO='{"id":1,"name":"aoc-advent-of-code-2026","token":"tok-1","expiresA
 run_case "dos tokens en NDJSON" 200 "$TWO_TOKENS" 0 "$EXPECTED_TWO" exact
 run_case "listado vacío" 200 '{"pagination":{"cursor":"","limit":10,"total":0},"data":[]}' 0 "" exact
 run_case "token sin createdAt" 200 '{"data":[{"id":3,"name":"pt-old","token":"tok-3","expiresAt":"2027-01-01T00:00:00Z"}]}' 0 '"createdAt":null'
-run_case "sin campo data" 200 '{"pagination":{"total":0}}' 1 "without a usable token list"
-run_case "JSON malformado" 200 '{"data":[' 1 "without a usable token list"
+run_case "sin campo data" 200 '{"pagination":{"total":0}}' 1 "not an array"
+run_case "data es objeto" 200 '{"data":{"id":1,"token":"tok-1"}}' 1 "not an array"
+run_case "pagina incompleta" 200 '{"pagination":{"total":2},"data":[{"id":1,"name":"aoc-advent-of-code-2026","token":"tok-1","expiresAt":"2027-01-01T00:00:00Z","createdAt":"2026-01-01T00:00:00Z"}]}' 1 "incomplete list"
+run_case "JSON malformado" 200 '{"data":[' 1 "not an array"
 run_case "401" 401 '{"error":"Unauthorized","message":"bad token"}' 1 "401 Unauthorized: bad token"
 run_case "500 vacío" 500 '' 1 "Empty response from server."
 run_case "jq ausente" 200 "$TWO_TOKENS" 1 "jq is required" substring "$CODACY_TEST_DIR/nojq"

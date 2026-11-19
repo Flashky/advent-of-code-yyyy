@@ -32,7 +32,7 @@ done
 RESPONSE_FILE=$(mktemp)
 trap 'rm -f "$RESPONSE_FILE"' EXIT
 
-HTTP_STATUS=$(curl -sS -X DELETE "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens/$TOKEN_ID" \
+HTTP_STATUS=$(curl -sS --connect-timeout 10 --max-time 60 -X DELETE "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens/$TOKEN_ID" \
      -H "Accept: application/json" \
      -H "api-token: $CODACY_API_TOKEN" \
      -w "%{http_code}" \

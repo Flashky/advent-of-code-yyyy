@@ -65,7 +65,7 @@ trap 'rm -f "$RESPONSE_FILE"' EXIT
 REQUEST_BODY=$(jq -nc --arg name "$TOKEN_NAME" --arg expiresAt "$EXPIRES_AT" \
   '{name: $name, expiresAt: $expiresAt}')
 
-HTTP_STATUS=$(curl -sS -X POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
+HTTP_STATUS=$(curl -sS --connect-timeout 10 --max-time 60 -X POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
      -H "api-token: $CODACY_API_TOKEN" \
@@ -90,11 +90,15 @@ if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
   # rejects a response carrying two documents, which would otherwise inject an
   # extra line into $GITHUB_OUTPUT.
   if TOKEN=$(jq -ser 'if length == 1 then .[0].data.token | select(type == "string" and test("^[!-~]+$")) else empty end' "$RESPONSE_FILE" 2>/dev/null); then
+    # The rollback step can only revoke by id. Never hand a token to the caller
+    # without the id that would let a failed provisioning undo it.
+    TOKEN_ID=$(jq -sr 'if length == 1 then .[0].data.id | select(type == "number" and . > 0 and . == floor) else empty end' "$RESPONSE_FILE" 2>/dev/null || true)
+    if [[ -z "$TOKEN_ID" ]]; then
+      echo "::error title=Codacy Token Error::Codacy returned a token without a numeric data.id; refusing to continue because the rollback step could not revoke it." >&2
+      exit 1
+    fi
     if [[ -n "${CODACY_TOKEN_STATE_FILE:-}" ]]; then
-      TOKEN_ID=$(jq -sr 'if length == 1 then .[0].data.id | numbers else empty end' "$RESPONSE_FILE" 2>/dev/null || true)
-      if [[ -n "$TOKEN_ID" ]]; then
-        printf 'id=%s\n' "$TOKEN_ID" >> "$CODACY_TOKEN_STATE_FILE"
-      fi
+      printf 'id=%s\n' "$TOKEN_ID" >> "$CODACY_TOKEN_STATE_FILE"
     fi
     echo "$TOKEN"
     exit 0

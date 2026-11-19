@@ -52,7 +52,11 @@ trap 'rm -f "$TOKENS_FILE"' EXIT
 
 codacy-list-tokens.sh "$ORGANIZATION" "$REPOSITORY" > "$TOKENS_FILE"
 
-TOKEN_NAME="aoc-$REPOSITORY"
+# Codacy token names allow only letters, digits and dashes. Repositories may
+# legitimately use dots or underscores, so normalise those and keep the whole
+# name within Codacy's 100-character limit (4 for the `aoc-` prefix).
+SAFE_REPOSITORY=$(printf '%s' "$REPOSITORY" | tr '._' '--' | cut -c1-96)
+TOKEN_NAME="aoc-$SAFE_REPOSITORY"
 
 # Codacy enforces a unique token name per repository, but picking the newest
 # createdAt keeps the choice deterministic if that ever changes.
@@ -67,11 +71,27 @@ is_live() {
   (( epoch > $(date -u +%s) ))
 }
 
+is_expired() {
+  local expires_at="$1" epoch
+  [[ "$expires_at" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?Z$ ]] || return 1
+  epoch=$(date -u -d "$expires_at" +%s 2>/dev/null) || return 1
+  (( epoch <= $(date -u +%s) ))
+}
+
 if [[ -n "$MATCH" ]]; then
   TOKEN=$(jq -r '.token // empty' <<< "$MATCH")
-  if [[ -n "$TOKEN" ]] && is_live "$(jq -r '.expiresAt // empty' <<< "$MATCH")"; then
+  MATCH_EXPIRES=$(jq -r '.expiresAt // empty' <<< "$MATCH")
+  if [[ -n "$TOKEN" ]] && is_live "$MATCH_EXPIRES"; then
     echo "$TOKEN"
     exit 0
+  fi
+
+  # Only revoke once expiry is confirmed. A missing token value or an
+  # unparseable expiry is not proof that the token is dead: revoking it and
+  # then failing to create a replacement would break the stored secret.
+  if ! is_expired "$MATCH_EXPIRES"; then
+    echo "::error title=Codacy Token Error::Cannot confirm that $TOKEN_NAME has expired; refusing to revoke it." >&2
+    exit 1
   fi
 
   # The name is unique in Codacy: the expired token has to go before a new one

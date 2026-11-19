@@ -64,6 +64,8 @@ run_case "token válido" 200 '{"data":{"token":"abc123","id":1}}' 0 "abc123" exa
 run_case "token tras otras claves" 200 '{"data":{"expiresAt":"2027-01-01","token":"xyz789","id":2}}' 0 "xyz789" exact
 run_case "token en la raíz" 200 '{"token":"abc123"}' 1 "without a usable token"
 run_case "token ausente" 200 '{"data":{"id":3,"name":"pt-85976ce96e00"}}' 1 "without a usable token"
+run_case "id ausente" 200 '{"data":{"token":"abc123"}}' 1 "numeric data.id"
+run_case "id no numérico" 200 '{"data":{"token":"abc123","id":"7"}}' 1 "numeric data.id"
 run_case "token nulo" 200 '{"data":{"token":null}}' 1 "without a usable token"
 run_case "JSON malformado" 200 '{"data":{"token":"abc123"' 1 "without a usable token"
 run_case "dos documentos JSON" 200 '{"data":{"token":"a"}} {"data":{"token":"b"}}' 1 "without a usable token"
@@ -78,7 +80,7 @@ run_case "argumento inválido" 200 '{}' 1 "is not a valid GitHub owner/repositor
 run_case "nombre con espacio" 200 '{}' 1 "not a valid Codacy token name" substring "" "$PATH" Flashky "bad name!"
 run_case "nombre demasiado largo" 200 '{}' 1 "not a valid Codacy token name" substring "" "$PATH" Flashky "$(printf 'a%.0s' {1..101})"
 run_case "expiración pasada" 200 '{}' 1 "must be in the future" substring "" "$PATH" Flashky aoc-test "2020-01-01T00:00:00Z"
-run_case "expiración demasiado lejana" 200 '{}' 1 "must be in the future" substring "" "$PATH" Flashky aoc-test "2035-01-01T00:00:00Z"
+run_case "expiración demasiado lejana" 200 '{}' 1 "must be in the future" substring "" "$PATH" Flashky aoc-test "$(date -u -d '+366 days' +%Y-%m-%dT%H:%M:%SZ)"
 run_case "expiración mal formada" 200 '{}' 1 "not a valid Codacy expiry timestamp" substring "" "$PATH" Flashky aoc-test "not-a-date"
 
 : > "$CODACY_CALLS"
@@ -90,8 +92,8 @@ expect_status "POST con body" 0
 expect_stdout_is "POST con body" "new-token"
 expect_call "método de la petición" "METHOD=POST"
 expect_call "endpoint de creación" "/repositories/advent-of-code-2026/tokens"
-expect_body "nombre en el body" '"name":"aoc-advent-of-code-2026"'
-expect_body "caducidad en el body" "$EXPIRES"
+expect_json_field "nombre en el body" "name" "aoc-advent-of-code-2026"
+expect_json_field "caducidad en el body" "expiresAt" "$EXPIRES"
 
 STATE_FILE="$CODACY_TEST_DIR/state"
 : > "$STATE_FILE"

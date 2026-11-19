@@ -92,11 +92,14 @@ expect_order() {
   fi
 }
 
-# expect_body <name> <fragment>: the last request body must contain the fragment.
-expect_body() {
-  if tail -1 "$CODACY_BODIES" | grep -Fq -- "$2"; then
-    pass "$1: cuerpo"
+# expect_json_field <name> <field> <expected>: the last request body must have
+# exactly that value, not merely contain it as a substring of another value.
+expect_json_field() {
+  local actual
+  actual=$(tail -1 "$CODACY_BODIES" | jq -r --arg field "$2" '.[$field] // empty' 2>/dev/null || true)
+  if [[ "$actual" == "$3" ]]; then
+    pass "$1: $2=$3"
   else
-    fail "$1" "el cuerpo no contiene '$2' -> $(tail -1 "$CODACY_BODIES")"
+    fail "$1" "$2='$actual' (esperado '$3') -> $(tail -1 "$CODACY_BODIES")"
   fi
 }
