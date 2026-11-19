@@ -114,12 +114,38 @@ jobs:
           path: template
           ref: ${{ github.event.repository.default_branch }}
 
+      - name: Resolve Codacy Project Token
+        id: codacy-token
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          CODACY_TOKEN_STATE_FILE: ${{ runner.temp }}/codacy-token-state
+        run: |
+          set -euo pipefail
+          PROJECT_TOKEN=$(bash template/.github/scripts/provisioning/provision-codacy-token.sh "$OWNER" "$REPO_NAME")
+          echo "::add-mask::$PROJECT_TOKEN"
+          echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
+          if [[ -f "$CODACY_TOKEN_STATE_FILE" ]]; then
+            cat "$CODACY_TOKEN_STATE_FILE" >> $GITHUB_OUTPUT
+          fi
+
+      # See create-repo.yml: `stored` is set as soon as the repository can use
+      # the token, so a later failure must not revoke it.
+      - name: Store Codacy Project Token
+        id: store-codacy-token
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
+          echo "stored=true" >> "$GITHUB_OUTPUT"
+          gh secret set CODACY_PROJECT_TOKEN --app dependabot --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
+
       - name: Configure secrets
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
           AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
-          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -131,13 +157,17 @@ jobs:
           gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID"
           gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
 
-          if gh api "repos/$OWNER/$REPO_NAME/actions/secrets" --jq '.secrets[].name' | grep -qx CODACY_PROJECT_TOKEN; then
-            echo "CODACY_PROJECT_TOKEN already set, leaving it untouched."
-          else
-            token=$(bash template/.github/scripts/provisioning/codacy-create-token.sh "$OWNER" "$REPO_NAME")
-            echo "::add-mask::$token"
-            gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$token"
-          fi
+      - name: Revoke Codacy token if provisioning failed before storing the secret
+        if: failure() && steps.codacy-token.outputs.id != '' && steps.store-codacy-token.outputs.stored != 'true'
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: bash template/.github/scripts/provisioning/codacy-revoke-token.sh "$OWNER" "$REPO_NAME" "${{ steps.codacy-token.outputs.id }}"
+
+      - name: Reconcile Codacy tokens
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
+        run: bash template/.github/scripts/provisioning/reconcile-codacy-token.sh "$OWNER" "$REPO_NAME" "$CODACY_PROJECT_TOKEN"
 
       - name: Enable Auto-Merge
         env:

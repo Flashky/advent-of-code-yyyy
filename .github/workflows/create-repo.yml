@@ -181,16 +181,19 @@ jobs:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: bash .github/scripts/provisioning/codacy-add-repository.sh "$OWNER" "$REPO_NAME"
 
-      - name: Generate Codacy Project Token
+      - name: Resolve Codacy Project Token
         id: codacy-token
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          CODACY_TOKEN_STATE_FILE: ${{ runner.temp }}/codacy-token-state
         run: |
           set -euo pipefail
-          PROJECT_TOKEN=$(bash .github/scripts/provisioning/codacy-create-token.sh "$OWNER" "$REPO_NAME")
+          PROJECT_TOKEN=$(bash .github/scripts/provisioning/provision-codacy-token.sh "$OWNER" "$REPO_NAME")
           echo "::add-mask::$PROJECT_TOKEN"
           echo "token=$PROJECT_TOKEN" >> $GITHUB_OUTPUT
+          if [[ -f "$CODACY_TOKEN_STATE_FILE" ]]; then
+            cat "$CODACY_TOKEN_STATE_FILE" >> $GITHUB_OUTPUT
+          fi
 
       - name: Provision Workshop Environment
         env:
@@ -206,19 +209,31 @@ jobs:
           gh secret set AOC_APP_CLIENT_ID --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_CLIENT_ID"
           gh secret set AOC_APP_PRIVATE_KEY --env workshop --repo "$OWNER/$REPO_NAME" --body "$AOC_APP_PRIVATE_KEY"
 
+      # Keeping the token write in its own step makes the rollback unambiguous:
+      # `stored` is set as soon as the repository can actually use the token, so
+      # a later failure (Dependabot, variables, auto-merge) never revokes it.
+      - name: Store Codacy Project Token
+        id: store-codacy-token
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
+          echo "stored=true" >> "$GITHUB_OUTPUT"
+          gh secret set CODACY_PROJECT_TOKEN --app dependabot --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
+
       - name: Configure Secrets and Variables
         env:
           # GH_TOKEN for GitHub CLI commands. The others for injecting at the created repo.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           AOC_CI_APP_CLIENT_ID: ${{ secrets.AOC_CI_APP_CLIENT_ID }}
           AOC_CI_APP_PRIVATE_KEY: ${{ secrets.AOC_CI_APP_PRIVATE_KEY }}
-          CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
           AOC_YEAR: ${{ needs.verify.outputs.year }}
         run: |
           echo "Setting secrets for Actions..."
           gh secret set AOC_CI_APP_CLIENT_ID --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID"
           gh secret set AOC_CI_APP_PRIVATE_KEY --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
-          gh secret set CODACY_PROJECT_TOKEN --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
 
           echo "Setting variables for Actions..."
           gh variable set AOC_YEAR --repo "$OWNER/$REPO_NAME" --body "$AOC_YEAR"
@@ -226,7 +241,18 @@ jobs:
           echo "Setting secrets for Dependabot..."
           gh secret set AOC_CI_APP_CLIENT_ID --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_CLIENT_ID"
           gh secret set AOC_CI_APP_PRIVATE_KEY --app dependabot --repo "$OWNER/$REPO_NAME" --body "$AOC_CI_APP_PRIVATE_KEY"
-          gh secret set CODACY_PROJECT_TOKEN --app dependabot --repo "$OWNER/$REPO_NAME" --body "$CODACY_PROJECT_TOKEN"
+
+      - name: Revoke Codacy token if provisioning failed before storing the secret
+        if: failure() && steps.codacy-token.outputs.id != '' && steps.store-codacy-token.outputs.stored != 'true'
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: bash .github/scripts/provisioning/codacy-revoke-token.sh "$OWNER" "$REPO_NAME" "${{ steps.codacy-token.outputs.id }}"
+
+      - name: Reconcile Codacy tokens
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          CODACY_PROJECT_TOKEN: ${{ steps.codacy-token.outputs.token }}
+        run: bash .github/scripts/provisioning/reconcile-codacy-token.sh "$OWNER" "$REPO_NAME" "$CODACY_PROJECT_TOKEN"
 
       - name: Enable Auto-Merge
         env:

@@ -1,23 +1,26 @@
 #!/bin/bash
 # =================================================================================
-# Usage:       ./codacy-create-token.sh <owner> <repository-name>
-# Description: Generates a project-level Codacy token for the specified repository.
+# Usage:       ./codacy-create-token.sh <owner> <repository-name> <name> <expiresAt>
+# Description: Creates one project-level Codacy token with an explicit name and
+#              expiry date. Only talks to the token-creation endpoint.
 #              Requires jq: the response is parsed as JSON, not with grep/sed.
-# Example:     ./codacy-create-token.sh Flashky advent-of-code-2026
+# Example:     ./codacy-create-token.sh Flashky advent-of-code-2026 aoc-advent-of-code-2026 2027-10-30T17:50:35Z
 # =================================================================================
 
 set -euo pipefail
 
 GIT_PROVIDER="gh"
-ORGANIZATION="${1:?Usage: $0 <owner> <repository-name>}"
-REPOSITORY="${2:?Usage: $0 <owner> <repository-name>}"
+ORGANIZATION="${1:?Usage: $0 <owner> <repository-name> <name> <expiresAt>}"
+REPOSITORY="${2:?Usage: $0 <owner> <repository-name> <name> <expiresAt>}"
+TOKEN_NAME="${3:?Usage: $0 <owner> <repository-name> <name> <expiresAt>}"
+EXPIRES_AT="${4:?Usage: $0 <owner> <repository-name> <name> <expiresAt>}"
 
 # Validations
 
 : "${CODACY_API_TOKEN:?CODACY_API_TOKEN is not set}"
 
 command -v jq > /dev/null 2>&1 || {
-  echo "::error title=Missing Tool::jq is required to parse the Codacy API response." >&2
+  echo "::error title=Missing Tool::jq is required to build the request and parse the Codacy API response." >&2
   exit 1
 }
 
@@ -28,6 +31,27 @@ for value in "$ORGANIZATION" "$REPOSITORY"; do
   }
 done
 
+# Codacy only accepts alphanumeric characters and dashes, up to 100 characters.
+[[ "$TOKEN_NAME" =~ ^[A-Za-z0-9-]{1,100}$ ]] || {
+  echo "::error title=Invalid Argument::'$TOKEN_NAME' is not a valid Codacy token name." >&2
+  exit 1
+}
+
+# Codacy requires an ISO-8601 timestamp in the future and at most one year away.
+if [[ ! "$EXPIRES_AT" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?Z$ ]]; then
+  echo "::error title=Invalid Argument::'$EXPIRES_AT' is not a valid Codacy expiry timestamp." >&2
+  exit 1
+fi
+EXPIRY_EPOCH=$(date -u -d "$EXPIRES_AT" +%s 2>/dev/null) || {
+  echo "::error title=Invalid Argument::'$EXPIRES_AT' is not a valid Codacy expiry timestamp." >&2
+  exit 1
+}
+NOW_EPOCH=$(date -u +%s)
+if (( EXPIRY_EPOCH <= NOW_EPOCH || EXPIRY_EPOCH > NOW_EPOCH + 365 * 86400 )); then
+  echo "::error title=Invalid Argument::'$EXPIRES_AT' must be in the future and no more than one year away." >&2
+  exit 1
+fi
+
 # Temporary file to store the API response
 RESPONSE_FILE=$(mktemp)
 trap 'rm -f "$RESPONSE_FILE"' EXIT
@@ -35,9 +59,17 @@ trap 'rm -f "$RESPONSE_FILE"' EXIT
 # Generate a token
 # This script's stdout is the token and nothing else: the callers capture it in
 # a variable, so anything written there is swallowed when the step fails. Every
-# diagnostic, including workflow annotations, goes to stderr.
-HTTP_STATUS=$(curl -sSX POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
+# diagnostic, including workflow annotations, goes to stderr. The optional
+# CODACY_TOKEN_STATE_FILE is a side channel for the caller's rollback step: the
+# numeric id is not a secret and never goes to stdout.
+REQUEST_BODY=$(jq -nc --arg name "$TOKEN_NAME" --arg expiresAt "$EXPIRES_AT" \
+  '{name: $name, expiresAt: $expiresAt}')
+
+HTTP_STATUS=$(curl -sS -X POST "https://app.codacy.com/api/v3/organizations/$GIT_PROVIDER/$ORGANIZATION/repositories/$REPOSITORY/tokens" \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json" \
      -H "api-token: $CODACY_API_TOKEN" \
+     --data "$REQUEST_BODY" \
      -w "%{http_code}" \
      -o "$RESPONSE_FILE") || {
    rc=$?
@@ -58,6 +90,12 @@ if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
   # rejects a response carrying two documents, which would otherwise inject an
   # extra line into $GITHUB_OUTPUT.
   if TOKEN=$(jq -ser 'if length == 1 then .[0].data.token | select(type == "string" and test("^[!-~]+$")) else empty end' "$RESPONSE_FILE" 2>/dev/null); then
+    if [[ -n "${CODACY_TOKEN_STATE_FILE:-}" ]]; then
+      TOKEN_ID=$(jq -sr 'if length == 1 then .[0].data.id | numbers else empty end' "$RESPONSE_FILE" 2>/dev/null || true)
+      if [[ -n "$TOKEN_ID" ]]; then
+        printf 'id=%s\n' "$TOKEN_ID" >> "$CODACY_TOKEN_STATE_FILE"
+      fi
+    fi
     echo "$TOKEN"
     exit 0
   fi
